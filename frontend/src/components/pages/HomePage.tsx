@@ -1,29 +1,36 @@
 // HPI 1.5-V
-import React, { useEffect, useState, useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
-import { 
-  GitBranch, 
-  Activity, 
-  AlertCircle, 
-  CheckCircle, 
-  TrendingUp, 
-  Code, 
-  Terminal, 
-  Cpu, 
-  Shield, 
-  Zap, 
-  ChevronRight, 
-  Database, 
-  Lock, 
+import React, { useEffect, useState, useRef } from "react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useSpring,
+  AnimatePresence,
+} from "framer-motion";
+import {
+  GitBranch,
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  TrendingUp,
+  Code,
+  Terminal,
+  Cpu,
+  Shield,
+  Zap,
+  ChevronRight,
+  Database,
+  Lock,
   Server,
-  BookOpen
-} from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
-import { Repositories } from '@/entities';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
-import { Card } from '@/components/ui/card';
-import { Image } from '@/components/ui/image';
+  BookOpen,
+} from "lucide-react";
+import { BaseCrudService } from "@/integrations";
+import { Repositories } from "@/entities";
+import Header from "@/components/layout/Header";
+import Sidebar from "@/components/layout/Sidebar";
+import { Card } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
+import AnalyzeRepositoryModal from "./AnalyzeRepositoryModal";
 
 // --- Types ---
 type StatItem = {
@@ -36,7 +43,13 @@ type StatItem = {
 
 // --- Utility Components ---
 
-const GlitchText = ({ text, className }: { text: string; className?: string }) => {
+const GlitchText = ({
+  text,
+  className,
+}: {
+  text: string;
+  className?: string;
+}) => {
   return (
     <div className={`relative inline-block ${className}`}>
       <span className="relative z-10">{text}</span>
@@ -66,6 +79,7 @@ export default function HomePage() {
   // --- 1. Data Fidelity Protocol: Canonical Data Sources ---
   const [repositories, setRepositories] = useState<Repositories[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openModal, setOpenModal] = useState(false);
 
   // Preserve original data fetching logic
   useEffect(() => {
@@ -74,10 +88,12 @@ export default function HomePage() {
 
   const loadRepositories = async () => {
     try {
-      const { items } = await BaseCrudService.getAll<Repositories>('repositories');
+      const { items } = await BaseCrudService.getAll<Repositories>(
+        "repositories"
+      );
       setRepositories(items);
     } catch (error) {
-      console.error('Error loading repositories:', error);
+      console.error("Error loading repositories:", error);
     } finally {
       setLoading(false);
     }
@@ -86,45 +102,45 @@ export default function HomePage() {
   // Preserve original stats logic
   const stats: StatItem[] = [
     {
-      label: 'Total Repositories',
+      label: "Total Repositories",
       value: repositories.length,
       icon: GitBranch,
-      color: 'neon-teal',
-      trend: '+12% this week'
+      color: "neon-teal",
+      trend: "+12% this week",
     },
     {
-      label: 'Active Reviews',
-      value: repositories.filter(r => r.status === 'active').length,
+      label: "Active Reviews",
+      value: repositories.filter((r) => r.status === "active").length,
       icon: Activity,
-      color: 'secondary',
-      trend: 'Processing now'
+      color: "secondary",
+      trend: "Processing now",
     },
     {
-      label: 'Issues Found',
+      label: "Issues Found",
       value: Math.floor(Math.random() * 50) + 10, // Preserved random logic
       icon: AlertCircle,
-      color: 'destructive',
-      trend: 'Requires attention'
+      color: "destructive",
+      trend: "Requires attention",
     },
     {
-      label: 'Code Quality',
-      value: '87%',
+      label: "Code Quality",
+      value: "87%",
       icon: TrendingUp,
-      color: 'neon-teal',
-      trend: 'Top 5% of teams'
+      color: "neon-teal",
+      trend: "Top 5% of teams",
     },
   ];
 
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
-      case 'active':
-        return 'text-neon-teal border-neon-teal/30 bg-neon-teal/10';
-      case 'pending':
-        return 'text-secondary border-secondary/30 bg-secondary/10';
-      case 'archived':
-        return 'text-foreground/40 border-white/10 bg-white/5';
+      case "active":
+        return "text-neon-teal border-neon-teal/30 bg-neon-teal/10";
+      case "pending":
+        return "text-secondary border-secondary/30 bg-secondary/10";
+      case "archived":
+        return "text-foreground/40 border-white/10 bg-white/5";
       default:
-        return 'text-foreground/60 border-white/10 bg-white/5';
+        return "text-foreground/60 border-white/10 bg-white/5";
     }
   };
 
@@ -133,7 +149,7 @@ export default function HomePage() {
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
-    restDelta: 0.001
+    restDelta: 0.001,
   });
 
   return (
@@ -148,37 +164,44 @@ export default function HomePage() {
       <Sidebar />
 
       <main className="ml-0 md:ml-64 relative">
-        
         {/* --- HERO SECTION --- */}
         <section className="relative min-h-screen w-full flex flex-col justify-center items-center overflow-hidden pt-20">
           <GridBackground />
-          
+
           {/* Animated Code Rain Background (Preserved & Enhanced) */}
           <div className="absolute inset-0 opacity-20 pointer-events-none">
             {[...Array(15)].map((_, i) => (
               <motion.div
                 key={i}
                 className="absolute font-paragraph text-[10px] text-neon-teal writing-vertical-rl"
-                initial={{ y: -100, x: Math.random() * 100 + '%' }}
+                initial={{ y: -100, x: Math.random() * 100 + "%" }}
                 animate={{
-                  y: '120vh',
+                  y: "120vh",
                   opacity: [0, 1, 0],
                 }}
                 transition={{
                   duration: 15 + Math.random() * 10,
                   repeat: Infinity,
                   delay: Math.random() * 5,
-                  ease: 'linear',
+                  ease: "linear",
                 }}
               >
-                {['010101', 'SYSTEM_OK', 'ANALYZING', 'IMPORT_CORE', 'HEAP_ALLOC', 'STACK_TRACE'][Math.floor(Math.random() * 6)]}
+                {
+                  [
+                    "010101",
+                    "SYSTEM_OK",
+                    "ANALYZING",
+                    "IMPORT_CORE",
+                    "HEAP_ALLOC",
+                    "STACK_TRACE",
+                  ][Math.floor(Math.random() * 6)]
+                }
               </motion.div>
             ))}
           </div>
 
           <div className="container relative z-10 px-6 max-w-[100rem]">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              
               {/* Hero Text Content */}
               <div className="lg:col-span-7 flex flex-col gap-8">
                 <motion.div
@@ -193,17 +216,18 @@ export default function HomePage() {
                     </span>
                     SYSTEM V.2.0 ONLINE
                   </div>
-                  
+
                   <h1 className="font-heading text-6xl md:text-8xl font-bold leading-[0.9] tracking-tighter mb-6">
                     UNLEASH YOUR <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-teal to-secondary">
                       CODE POTENTIAL
                     </span>
                   </h1>
-                  
+
                   <p className="font-paragraph text-lg text-foreground/60 max-w-2xl leading-relaxed border-l-2 border-neon-teal/50 pl-6">
-                    The next-generation AI code review and developer skill profiling platform. 
-                    Transform raw commits into actionable intelligence. 
+                    The next-generation AI code review and developer skill
+                    profiling platform. Transform raw commits into actionable
+                    intelligence.
                   </p>
                 </motion.div>
 
@@ -213,8 +237,8 @@ export default function HomePage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                  <button 
-                    onClick={() => window.location.href = '/code-review'}
+                  <button
+                    onClick={() => (window.location.href = "/code-review")}
                     className="group relative px-8 py-4 bg-neon-teal text-black font-paragraph font-bold text-sm uppercase tracking-wider overflow-hidden cursor-pointer"
                   >
                     <span className="relative z-10 flex items-center gap-2">
@@ -222,9 +246,9 @@ export default function HomePage() {
                     </span>
                     <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out" />
                   </button>
-                  
-                  <button 
-                    onClick={() => window.location.href = '/best-practices'}
+
+                  <button
+                    onClick={() => (window.location.href = "/best-practices")}
                     className="group px-8 py-4 border border-white/20 bg-transparent text-white font-paragraph font-bold text-sm uppercase tracking-wider hover:bg-white/5 transition-colors cursor-pointer"
                   >
                     View Documentation
@@ -246,15 +270,15 @@ export default function HomePage() {
                     <div className="w-3 h-3 rounded-full bg-green-500/50" />
                   </div>
                   <div className="p-8 font-paragraph text-xs text-neon-teal/80 mt-8 space-y-2">
-                    <p>{'>'} initializing_core_modules...</p>
-                    <p>{'>'} loading_neural_networks...</p>
-                    <p>{'>'} connecting_to_repo_db...</p>
-                    <p className="text-white">{'>'} connection_established</p>
+                    <p>{">"} initializing_core_modules...</p>
+                    <p>{">"} loading_neural_networks...</p>
+                    <p>{">"} connecting_to_repo_db...</p>
+                    <p className="text-white">{">"} connection_established</p>
                     <div className="mt-8 grid grid-cols-2 gap-4">
                       <div className="h-24 border border-dashed border-white/20 bg-white/5 p-4">
                         <Activity className="w-6 h-6 mb-2 text-secondary" />
                         <div className="h-1 w-full bg-white/10 rounded overflow-hidden">
-                          <motion.div 
+                          <motion.div
                             className="h-full bg-secondary"
                             animate={{ width: ["0%", "100%"] }}
                             transition={{ duration: 2, repeat: Infinity }}
@@ -263,20 +287,28 @@ export default function HomePage() {
                       </div>
                       <div className="h-24 border border-dashed border-white/20 bg-white/5 p-4">
                         <Database className="w-6 h-6 mb-2 text-neon-teal" />
-                        <div className="text-2xl font-bold text-white">98.2%</div>
+                        <div className="text-2xl font-bold text-white">
+                          98.2%
+                        </div>
                       </div>
                     </div>
                   </div>
                 </motion.div>
-                
+
                 {/* Floating Elements */}
-                <motion.div 
+                <motion.div
                   className="absolute -right-10 -bottom-10 w-64 h-40 bg-black border border-neon-teal/30 p-6 shadow-[0_0_30px_rgba(100,255,218,0.1)]"
                   animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
                 >
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-xs font-paragraph text-neon-teal">LIVE METRICS</span>
+                    <span className="text-xs font-paragraph text-neon-teal">
+                      LIVE METRICS
+                    </span>
                     <div className="w-2 h-2 bg-neon-teal rounded-full animate-pulse" />
                   </div>
                   <div className="space-y-2">
@@ -305,12 +337,19 @@ export default function HomePage() {
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
-                  <div key={index} className="flex items-center gap-4 group cursor-default">
-                    <div className={`p-2 rounded bg-${stat.color}/10 border border-${stat.color}/20 group-hover:border-${stat.color} transition-colors`}>
+                  <div
+                    key={index}
+                    className="flex items-center gap-4 group cursor-default"
+                  >
+                    <div
+                      className={`p-2 rounded bg-${stat.color}/10 border border-${stat.color}/20 group-hover:border-${stat.color} transition-colors`}
+                    >
                       <Icon className={`w-5 h-5 text-${stat.color}`} />
                     </div>
                     <div>
-                      <div className="text-xs font-paragraph text-foreground/50 uppercase tracking-wider">{stat.label}</div>
+                      <div className="text-xs font-paragraph text-foreground/50 uppercase tracking-wider">
+                        {stat.label}
+                      </div>
                       <div className="text-xl font-heading font-bold text-white flex items-baseline gap-2">
                         {stat.value}
                         {stat.trend && (
@@ -339,31 +378,51 @@ export default function HomePage() {
                   <GlitchText text="CONNECTED REPOSITORIES" />
                 </h2>
                 <p className="font-paragraph text-foreground/60 max-w-xl">
-                  Real-time monitoring of your codebase. Select a repository to initiate deep-scan analysis or view architectural compliance reports.
+                  Real-time monitoring of your codebase. Select a repository to
+                  initiate deep-scan analysis or view architectural compliance
+                  reports.
                 </p>
               </div>
-              <button 
-                onClick={() => alert('Repository connection feature coming soon!')}
+              {/* Add Repo Button */}
+              <button
+                onClick={() => setOpenModal(true)}
                 className="px-6 py-3 border border-neon-teal text-neon-teal font-paragraph text-xs hover:bg-neon-teal hover:text-black transition-all duration-300 cursor-pointer"
               >
                 + ADD REPOSITORY
               </button>
             </div>
 
+            {/* Modal */}
+            <AnalyzeRepositoryModal
+              open={openModal}
+              onClose={() => setOpenModal(false)}
+              onAnalyze={(url) => {
+                console.log("Analyzing:", url);
+                setOpenModal(false);
+              }}
+            />
             {loading ? (
               <div className="h-96 w-full flex items-center justify-center border border-white/10 bg-white/5">
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-12 h-12 border-4 border-neon-teal border-t-transparent rounded-full animate-spin" />
-                  <p className="font-paragraph text-xs text-neon-teal animate-pulse">ESTABLISHING UPLINK...</p>
+                  <p className="font-paragraph text-xs text-neon-teal animate-pulse">
+                    ESTABLISHING UPLINK...
+                  </p>
                 </div>
               </div>
             ) : repositories.length === 0 ? (
               <div className="h-96 w-full flex flex-col items-center justify-center border border-dashed border-white/20 bg-white/5 rounded-lg">
                 <Code className="w-16 h-16 text-foreground/20 mb-6" />
-                <h3 className="font-heading text-xl text-white mb-2">No Signal Detected</h3>
-                <p className="font-paragraph text-foreground/60 mb-6">Connect your first repository to begin analysis.</p>
-                <button 
-                  onClick={() => alert('Repository connection feature coming soon!')}
+                <h3 className="font-heading text-xl text-white mb-2">
+                  No Signal Detected
+                </h3>
+                <p className="font-paragraph text-foreground/60 mb-6">
+                  Connect your first repository to begin analysis.
+                </p>
+                <button
+                  onClick={() =>
+                    alert("Repository connection feature coming soon!")
+                  }
                   className="px-6 py-3 bg-white text-black font-paragraph text-xs font-bold hover:bg-neon-teal transition-colors cursor-pointer"
                 >
                   CONNECT REPO
@@ -381,7 +440,7 @@ export default function HomePage() {
                     className="group relative"
                   >
                     <div className="absolute inset-0 bg-gradient-to-b from-neon-teal/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    
+
                     <Card className="h-full border-white/10 bg-[#1a1a1a] hover:border-neon-teal/50 transition-all duration-300 p-0 overflow-hidden flex flex-col">
                       {/* Card Header */}
                       <div className="p-6 border-b border-white/5 bg-white/[0.02]">
@@ -389,37 +448,46 @@ export default function HomePage() {
                           <div className="p-2 bg-black border border-white/10 rounded">
                             <GitBranch className="w-5 h-5 text-neon-teal" />
                           </div>
-                          <span className={`px-2 py-1 text-[10px] font-paragraph uppercase tracking-wider border rounded ${getStatusColor(repo.status)}`}>
-                            {repo.status || 'UNKNOWN'}
+                          <span
+                            className={`px-2 py-1 text-[10px] font-paragraph uppercase tracking-wider border rounded ${getStatusColor(
+                              repo.status
+                            )}`}
+                          >
+                            {repo.status || "UNKNOWN"}
                           </span>
                         </div>
                         <h3 className="font-heading text-xl font-bold text-white group-hover:text-neon-teal transition-colors truncate">
                           {repo.repositoryName}
                         </h3>
                         <p className="font-paragraph text-xs text-foreground/50 mt-1 truncate">
-                          {repo.owner || 'Unknown Owner'}
+                          {repo.owner || "Unknown Owner"}
                         </p>
                       </div>
 
                       {/* Card Body */}
                       <div className="p-6 flex-grow flex flex-col justify-between">
                         <p className="font-paragraph text-sm text-foreground/70 line-clamp-2 mb-6 min-h-[2.5em]">
-                          {repo.description || 'No description provided for this repository module.'}
+                          {repo.description ||
+                            "No description provided for this repository module."}
                         </p>
-                        
+
                         <div className="space-y-4">
                           <div className="flex justify-between items-center text-xs font-paragraph">
-                            <span className="text-foreground/40">LAST SYNC</span>
+                            <span className="text-foreground/40">
+                              LAST SYNC
+                            </span>
                             <span className="text-white">
-                              {repo.lastSyncDate ? new Date(repo.lastSyncDate).toLocaleDateString() : 'NEVER'}
+                              {repo.lastSyncDate
+                                ? new Date(
+                                    repo.lastSyncDate
+                                  ).toLocaleDateString()
+                                : "NEVER"}
                             </span>
                           </div>
-                          
+
                           {/* Decorative Progress Bar */}
                           <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-neon-teal to-secondary w-[0%] group-hover:w-[100%] transition-all duration-1000 ease-out" 
-                            />
+                            <div className="h-full bg-gradient-to-r from-neon-teal to-secondary w-[0%] group-hover:w-[100%] transition-all duration-1000 ease-out" />
                           </div>
                         </div>
                       </div>
@@ -442,16 +510,15 @@ export default function HomePage() {
         {/* --- FEATURE SHOWCASE (Parallax & Sticky) --- */}
         <section className="relative py-32 bg-black overflow-hidden">
           <div className="absolute inset-0 opacity-30">
-             <Image 
-               src="https://static.wixstatic.com/media/acb37d_7515f57f045d461fb4e7679761ec88f0~mv2.png?originWidth=1152&originHeight=768"
-               alt="Abstract Grid Background"
-               className="w-full h-full object-cover opacity-20"
-             />
+            <Image
+              src="https://static.wixstatic.com/media/acb37d_7515f57f045d461fb4e7679761ec88f0~mv2.png?originWidth=1152&originHeight=768"
+              alt="Abstract Grid Background"
+              className="w-full h-full object-cover opacity-20"
+            />
           </div>
 
           <div className="container max-w-[100rem] mx-auto px-6 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-24">
-              
               {/* Sticky Content Side */}
               <div className="lg:sticky lg:top-32 h-fit">
                 <h2 className="font-heading text-5xl md:text-6xl font-bold mb-8 leading-tight">
@@ -459,16 +526,30 @@ export default function HomePage() {
                   <span className="text-secondary">ARCHITECTURE</span>
                 </h2>
                 <p className="font-paragraph text-lg text-foreground/70 mb-12 max-w-md">
-                  Our AI doesn't just read code; it understands intent. Visualize complexity, track technical debt, and enforce best practices across your entire organization.
+                  Our AI doesn't just read code; it understands intent.
+                  Visualize complexity, track technical debt, and enforce best
+                  practices across your entire organization.
                 </p>
-                
+
                 <div className="space-y-8">
                   {[
-                    { title: 'Pattern Recognition', desc: 'Identifies anti-patterns and suggests architectural improvements.', icon: Shield },
-                    { title: 'Skill Profiling', desc: 'Maps developer strengths based on commit history and code complexity.', icon: Zap },
-                    { title: 'Automated Compliance', desc: 'Ensures all code meets your defined security and style guidelines.', icon: Lock },
+                    {
+                      title: "Pattern Recognition",
+                      desc: "Identifies anti-patterns and suggests architectural improvements.",
+                      icon: Shield,
+                    },
+                    {
+                      title: "Skill Profiling",
+                      desc: "Maps developer strengths based on commit history and code complexity.",
+                      icon: Zap,
+                    },
+                    {
+                      title: "Automated Compliance",
+                      desc: "Ensures all code meets your defined security and style guidelines.",
+                      icon: Lock,
+                    },
                   ].map((feature, idx) => (
-                    <motion.div 
+                    <motion.div
                       key={idx}
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -480,8 +561,12 @@ export default function HomePage() {
                         <feature.icon className="w-6 h-6 text-secondary" />
                       </div>
                       <div>
-                        <h4 className="font-heading text-xl font-bold mb-2">{feature.title}</h4>
-                        <p className="font-paragraph text-sm text-foreground/60">{feature.desc}</p>
+                        <h4 className="font-heading text-xl font-bold mb-2">
+                          {feature.title}
+                        </h4>
+                        <p className="font-paragraph text-sm text-foreground/60">
+                          {feature.desc}
+                        </p>
                       </div>
                     </motion.div>
                   ))}
@@ -490,7 +575,7 @@ export default function HomePage() {
 
               {/* Scrolling Visuals Side */}
               <div className="flex flex-col gap-12 pt-12 lg:pt-0">
-                <motion.div 
+                <motion.div
                   className="relative aspect-square md:aspect-video bg-[#0a0a0a] border border-white/10 p-8 overflow-hidden group"
                   initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -507,15 +592,19 @@ export default function HomePage() {
                         <motion.div
                           key={i}
                           className="h-16 bg-white/5 border border-white/10 rounded-sm"
-                          animate={{ 
+                          animate={{
                             scale: [1, 1.05, 1],
-                            borderColor: ['rgba(255,255,255,0.1)', 'rgba(100,255,218,0.5)', 'rgba(255,255,255,0.1)']
+                            borderColor: [
+                              "rgba(255,255,255,0.1)",
+                              "rgba(100,255,218,0.5)",
+                              "rgba(255,255,255,0.1)",
+                            ],
                           }}
-                          transition={{ 
-                            duration: 2, 
-                            delay: i * 0.1, 
+                          transition={{
+                            duration: 2,
+                            delay: i * 0.1,
                             repeat: Infinity,
-                            repeatDelay: 3 
+                            repeatDelay: 3,
                           }}
                         />
                       ))}
@@ -523,7 +612,7 @@ export default function HomePage() {
                   </div>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                   className="relative aspect-square md:aspect-video bg-[#0a0a0a] border border-white/10 p-8 overflow-hidden"
                   initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -537,11 +626,15 @@ export default function HomePage() {
                     <div className="relative w-64 h-64 border border-white/20 rounded-full flex items-center justify-center">
                       <div className="absolute w-48 h-48 border border-white/10 rounded-full" />
                       <div className="absolute w-32 h-32 border border-white/10 rounded-full" />
-                      <motion.div 
+                      <motion.div
                         className="absolute w-1/2 h-1/2 bg-gradient-to-tr from-secondary/40 to-transparent origin-bottom-left"
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                        style={{ borderRadius: '0 100% 0 0' }}
+                        transition={{
+                          duration: 4,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        style={{ borderRadius: "0 100% 0 0" }}
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-2 h-2 bg-white rounded-full" />
@@ -558,37 +651,73 @@ export default function HomePage() {
         <section className="py-32 px-6 border-t border-white/10 bg-[#0f0f0f]">
           <div className="max-w-[100rem] mx-auto">
             <div className="text-center mb-20">
-              <h2 className="font-heading text-4xl font-bold mb-4">COMMAND CENTER</h2>
-              <p className="font-paragraph text-foreground/60">Execute immediate actions on your codebase</p>
+              <h2 className="font-heading text-4xl font-bold mb-4">
+                COMMAND CENTER
+              </h2>
+              <p className="font-paragraph text-foreground/60">
+                Execute immediate actions on your codebase
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
-                { title: 'Run Code Review', icon: CheckCircle, color: 'neon-teal', desc: 'Trigger AI analysis on latest commits', href: '/code-review' },
-                { title: 'View Metrics', icon: Activity, color: 'secondary', desc: 'Deep dive into quality and performance', href: '/code-quality' },
-                { title: 'Best Practices', icon: BookOpen, color: 'white', desc: 'Consult the architecture guidelines', href: '/best-practices' },
+                {
+                  title: "Run Code Review",
+                  icon: CheckCircle,
+                  color: "neon-teal",
+                  desc: "Trigger AI analysis on latest commits",
+                  href: "/code-review",
+                },
+                {
+                  title: "View Metrics",
+                  icon: Activity,
+                  color: "secondary",
+                  desc: "Deep dive into quality and performance",
+                  href: "/code-quality",
+                },
+                {
+                  title: "Best Practices",
+                  icon: BookOpen,
+                  color: "white",
+                  desc: "Consult the architecture guidelines",
+                  href: "/best-practices",
+                },
               ].map((action, i) => (
                 <motion.div
                   key={i}
                   whileHover={{ y: -10 }}
                   className="group cursor-pointer"
-                  onClick={() => window.location.href = action.href}
+                  onClick={() => (window.location.href = action.href)}
                 >
-                  <div className={`h-full p-8 border border-white/10 bg-white/5 backdrop-blur-sm hover:border-${action.color}/50 transition-all duration-300 relative overflow-hidden`}>
-                    <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
-                      <action.icon className={`w-32 h-32 text-${action.color}`} />
+                  <div
+                    className={`h-full p-8 border border-white/10 bg-white/5 backdrop-blur-sm hover:border-${action.color}/50 transition-all duration-300 relative overflow-hidden`}
+                  >
+                    <div
+                      className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity`}
+                    >
+                      <action.icon
+                        className={`w-32 h-32 text-${action.color}`}
+                      />
                     </div>
-                    
-                    <div className={`w-12 h-12 rounded-lg bg-${action.color}/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform`}>
+
+                    <div
+                      className={`w-12 h-12 rounded-lg bg-${action.color}/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform`}
+                    >
                       <action.icon className={`w-6 h-6 text-${action.color}`} />
                     </div>
-                    
-                    <h3 className="font-heading text-2xl font-bold mb-4 group-hover:text-white transition-colors">{action.title}</h3>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-8">{action.desc}</p>
-                    
+
+                    <h3 className="font-heading text-2xl font-bold mb-4 group-hover:text-white transition-colors">
+                      {action.title}
+                    </h3>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-8">
+                      {action.desc}
+                    </p>
+
                     <div className="flex items-center gap-2 text-xs font-paragraph font-bold uppercase tracking-wider">
                       <span className={`text-${action.color}`}>Execute</span>
-                      <ChevronRight className={`w-3 h-3 text-${action.color} group-hover:translate-x-1 transition-transform`} />
+                      <ChevronRight
+                        className={`w-3 h-3 text-${action.color} group-hover:translate-x-1 transition-transform`}
+                      />
                     </div>
                   </div>
                 </motion.div>
@@ -601,13 +730,14 @@ export default function HomePage() {
         <footer className="py-12 px-6 border-t border-white/10 bg-black text-center">
           <div className="flex items-center justify-center gap-2 mb-4 opacity-50">
             <Terminal className="w-4 h-4" />
-            <span className="font-paragraph text-xs">SYSTEM STATUS: OPERATIONAL</span>
+            <span className="font-paragraph text-xs">
+              SYSTEM STATUS: OPERATIONAL
+            </span>
           </div>
           <p className="font-paragraph text-xs text-foreground/30">
             © 2026 AI CODE REVIEWER. ALL RIGHTS RESERVED.
           </p>
         </footer>
-
       </main>
     </div>
   );

@@ -1,0 +1,21 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model RepoAnalysis {
+  id              String   @id @default(uuid())
+  repoUrl         String
+  repoName        String
+  languages       String[]
+  commits         Int
+  files           Int
+  scores          Json
+  aiFeedback      Json
+  skillLevel      String
+  createdAt       DateTime @default(now())
+}
