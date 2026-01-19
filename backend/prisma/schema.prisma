@@ -7,24 +7,60 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Analysis {
-  id            String   @id @default(uuid())
-  repoUrl       String
-  repoName      String?
-  status        String   @default("processing")
-
-//Repo status
-  languages     String[]
-  commits       Int?
-  files         Int?
-  
-//Ai results
-  codeQuality   Json?
-  codeQualitySource   String?  // "ai" | "fallback"
-  aiReview      Json?
-  skillsProfile Json?
-  bestPractices Json?
-
-  createdAt     DateTime @default(now())
+enum AnalysisStatus {
+  processing
+  completed
+  failed
 }
 
+enum RepositoryStatus {
+  analyzing
+  connected
+  error
+}
+
+model Repository {
+  id             String             @id @default(uuid())
+  repositoryUrl  String             @unique
+  repositoryName String
+  owner          String?
+  description    String?
+  status         RepositoryStatus
+
+  // One-to-one relation
+  analysis        Analysis?
+
+  lastSyncDate   DateTime           @default(now())
+  createdAt      DateTime           @default(now())
+}
+
+model Analysis {
+  id             String             @id @default(uuid())
+
+  // Repository metadata
+  repoUrl        String
+  repoName       String?
+  languages      String[]
+  commits        Int?
+  files          Int?
+
+  // Analysis lifecycle
+  status         AnalysisStatus     @default(processing)
+  source         String             @default("pending") // pending | ai | fallback
+  analyzedAt     DateTime?
+
+  // AI Results
+  codeQuality    Json?
+  architecture   Json?
+  review         Json?
+  bestPractices  Json?
+  redFlags       Json?
+  skillSummary   String?
+  overallVerdict String?
+
+  //  FIX: repositoryId must be UNIQUE for 1–1
+  repositoryId   String?            @unique
+  repository     Repository?        @relation(fields: [repositoryId], references: [id])
+
+  createdAt      DateTime           @default(now())
+}

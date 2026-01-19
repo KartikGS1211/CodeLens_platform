@@ -3,43 +3,49 @@ import { fetchRepoData, parseFiles } from "./githubservice.js";
 import { aiEvaluate } from "./aiservice.js";
 import { calculateSkillsLevel } from "../utils/skillutils.js";
 
-export async function runAnalysisPipeline(id, repoUrl) {
+export async function runAnalysisPipeline(analysisId, repoUrl) {
   try {
-    console.log("🚀 Starting analysis for:", repoUrl);
+    console.log("🚀 Starting analysis pipeline for:", repoUrl);
 
-    const [owner, repo] = repoUrl.split("/").slice(-2);
+    const parts = repoUrl.replace(/\/$/, "").split("/");
+    const owner = parts[3];
+    const repo = parts[4];
 
-    // 🔹 1. Fetch GitHub metadata
+    /**
+     * 1️⃣ Fetch GitHub metadata
+     */
     let repoData;
     try {
       repoData = await fetchRepoData(owner, repo);
     } catch (err) {
-      console.error("❌ GitHub repo fetch failed:", err.message);
+      console.error("❌ GitHub fetch failed:", err.message);
 
       await prisma.analysis.update({
-        where: { id },
+        where: { id: analysisId },
         data: {
-          status: "completed",
-          codeQualitySource: "fallback",
-          skillsProfile: {
-            level: "Unknown",
-            summary: "GitHub repository could not be analyzed",
-          },
+          status: "failed",
+          source: "fallback",
+          skillSummary: "GitHub repository could not be fetched",
         },
       });
 
       return;
     }
 
-    // 🔹 2. Parse source files (SAFE – never throws)
+    /**
+     * 2️⃣ Parse repository source files
+     * This function must NEVER throw
+     */
     const codeFiles = await parseFiles(owner, repo);
 
-    // 🔹 3. NO FILES → GRACEFUL FALLBACK (IMPORTANT FIX)
+    /**
+     * 3️⃣ No analyzable files → deterministic fallback
+     */
     if (!codeFiles || codeFiles.length === 0) {
       console.warn("⚠️ No supported source files found. Using fallback.");
 
       await prisma.analysis.update({
-        where: { id },
+        where: { id: analysisId },
         data: {
           repoName: repoData.name || repo,
           languages: repoData.languages || [],
@@ -52,44 +58,61 @@ export async function runAnalysisPipeline(id, repoUrl) {
             security: 7,
             performance: 7,
           },
-          codeQualitySource: "fallback",
-
-          aiReview: {
+          architecture: {
+            pattern: "Unknown",
+            scalability: "Not assessable",
+            separationOfConcerns: "Not assessable",
+          },
+          review: {
             strengths: [],
             weaknesses: ["No supported source files found"],
-            suggestions: ["Add supported source code files"],
+            suggestions: ["Add backend or frontend source code"],
           },
-
           bestPractices: [],
+          redFlags: ["Repository contains no analyzable code"],
 
-          skillsProfile: {
-            level: "Unknown",
-            summary: "Repository does not contain analyzable source files",
-          },
+          skillSummary: "Repository does not contain analyzable source files",
+          overallVerdict: "Analysis skipped due to missing source code",
 
+          source: "fallback",
+          analyzedAt: new Date(),
           status: "completed",
         },
       });
 
-      console.log("✅ Analysis completed with fallback (no code files)");
+      await prisma.repository.update({
+        where: { repositoryUrl: repoUrl },
+        data: {
+          status: "connected",
+          lastSyncDate: new Date(),
+        },
+      });
+
+      console.log("✅ Fallback analysis completed (no files)");
       return;
     }
 
-    // 🔹 4. AI Evaluation (SAFE – fallback guaranteed)
+    /**
+     * 4️⃣ AI Evaluation (AI → fallback guaranteed)
+     */
     const aiResult = await aiEvaluate(codeFiles);
-    const isFallback = aiResult?.__source === "fallback";
+    const isFallback = aiResult.__source === "fallback";
 
-    // 🔹 5. Normalize AI output
+    /**
+     * 5️⃣ Normalize + secure AI output
+     */
     const safeCodeQuality = {
-      readability: Number(aiResult?.codeQuality?.readability ?? 7),
-      maintainability: Number(aiResult?.codeQuality?.maintainability ?? 7),
-      security: Number(aiResult?.codeQuality?.security ?? 7),
-      performance: Number(aiResult?.codeQuality?.performance ?? 7),
+      readability: Number(aiResult.codeQuality?.readability ?? 7),
+      maintainability: Number(aiResult.codeQuality?.maintainability ?? 7),
+      security: Number(aiResult.codeQuality?.security ?? 7),
+      performance: Number(aiResult.codeQuality?.performance ?? 7),
     };
 
-    // 🔹 6. Save FINAL result
+    /**
+     * 6️⃣ Persist final analysis
+     */
     await prisma.analysis.update({
-      where: { id },
+      where: { id: analysisId },
       data: {
         repoName: repoData.name || repo,
         languages: repoData.languages || [],
@@ -97,35 +120,51 @@ export async function runAnalysisPipeline(id, repoUrl) {
         files: repoData.files || 0,
 
         codeQuality: safeCodeQuality,
-        codeQualitySource: isFallback ? "fallback" : "ai",
-
-        aiReview: aiResult.review ?? {},
+        architecture: aiResult.architecture ?? {},
+        review: aiResult.review ?? {},
         bestPractices: aiResult.bestPractices ?? [],
+        redFlags: aiResult.redFlags ?? [],
 
-        skillsProfile: {
-          level: calculateSkillsLevel(safeCodeQuality),
-          summary: aiResult.skillSummary || "Skill analysis completed",
-        },
+        skillSummary:
+          aiResult.skillSummary ||
+          calculateSkillsLevel(safeCodeQuality),
 
+        overallVerdict:
+          aiResult.overallVerdict ||
+          "Analysis completed successfully",
+
+        source: isFallback ? "fallback" : "ai",
+        analyzedAt: new Date(),
         status: "completed",
       },
     });
 
-    console.log("🎉 Analysis completed successfully");
+    /**
+     * 7️⃣ Mark repository as completed
+     */
+    await prisma.repository.update({
+      where: { repositoryUrl: repoUrl },
+      data: {
+        status: "connected",
+        lastSyncDate: new Date(),
+      },
+    });
+
+    console.log("🎉 Analysis pipeline completed successfully");
   } catch (err) {
-    // 🔴 LAST RESORT (should NEVER happen now)
+    /**
+     * Absolute last-resort failure handler
+     * This should almost never execute
+     */
     console.error("❌ PIPELINE CRITICAL FAILURE:", err);
 
     await prisma.analysis
       .update({
-        where: { id },
+        where: { id: analysisId },
         data: {
-          status: "completed",
-          codeQualitySource: "fallback",
-          skillsProfile: {
-            level: "Unknown",
-            summary: "Unexpected error during analysis",
-          },
+          status: "failed",
+          source: "fallback",
+          skillSummary: "Unexpected error during analysis pipeline",
         },
       })
       .catch(() => {});

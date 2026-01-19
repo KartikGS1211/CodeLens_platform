@@ -6,6 +6,7 @@ if (!process.env.GITHUB_TOKEN) {
 
 const githubClient = axios.create({
   baseURL: "https://api.github.com",
+  timeout: 15000,
   headers: {
     Authorization: process.env.GITHUB_TOKEN
       ? `Bearer ${process.env.GITHUB_TOKEN}`
@@ -18,86 +19,105 @@ const githubClient = axios.create({
  * Fetch repository metadata
  */
 export async function fetchRepoData(owner, repo) {
-  const repoRes = await githubClient.get(`/repos/${owner}/${repo}`);
-  const langRes = await githubClient.get(`/repos/${owner}/${repo}/languages`);
+  try {
+    const repoRes = await githubClient.get(`/repos/${owner}/${repo}`);
+    const langRes = await githubClient.get(`/repos/${owner}/${repo}/languages`);
 
-  // Commit count (best-effort)
-  const commitsRes = await githubClient.get(
-    `/repos/${owner}/${repo}/commits?per_page=1`
-  );
+    // Commit count (best-effort, safe)
+    let commitCount = 0;
+    try {
+      const commitsRes = await githubClient.get(
+        `/repos/${owner}/${repo}/commits?per_page=1`
+      );
+      const match =
+        commitsRes.headers.link?.match(/page=(\d+)>; rel="last"/);
+      commitCount = match ? Number(match[1]) : commitsRes.data.length;
+    } catch {
+      commitCount = 0;
+    }
 
-  const commitMatch =
-    commitsRes.headers.link?.match(/page=(\d+)>; rel="last"/);
-
-  const commitCount = commitMatch ? Number(commitMatch[1]) : 1;
-
-  return {
-    name: repoRes.data.name,
-    languages: Object.keys(langRes.data),
-    commits: commitCount,
-    files: repoRes.data.open_issues_count ?? 0, // safer metric
-  };
+    return {
+      name: repoRes.data.name,
+      defaultBranch: repoRes.data.default_branch,
+      languages: Object.keys(langRes.data || {}),
+      commits: commitCount,
+      files: repoRes.data.size ?? 0, // repo size (KB) as safe metric
+    };
+  } catch (err) {
+    if (err.response?.status === 403) {
+      throw new Error("GitHub API rate limit exceeded");
+    }
+    throw err;
+  }
 }
 
 /**
- * Parse important code files
+ * Parse important source & config files
  */
 export async function parseFiles(owner, repo) {
-  let treeRes;
-
   try {
-    treeRes = await githubClient.get(
-      `/repos/${owner}/${repo}/git/trees/main?recursive=1`
+    // 1️⃣ Get default branch dynamically
+    const repoRes = await githubClient.get(`/repos/${owner}/${repo}`);
+    const branch = repoRes.data.default_branch;
+
+    // 2️⃣ Fetch repo tree
+    const treeRes = await githubClient.get(
+      `/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`
     );
-  } catch {
-    treeRes = await githubClient.get(
-      `/repos/${owner}/${repo}/git/trees/master?recursive=1`
-    );
-  }
 
-  const tree = treeRes.data.tree || [];
+    const tree = treeRes.data.tree || [];
 
-  const importantFiles = tree
-    .filter(
-      (file) =>
-        file.type === "blob" &&
-        (
-        file.path.endsWith(".js") ||
-        file.path.endsWith(".jsx") ||
-        file.path.endsWith(".ts") ||
-        file.path.endsWith(".tsx") ||
-        file.path.endsWith(".py") ||     // ✅ Python
-        file.path.endsWith(".cs") ||     // ✅ C#
-        file.path.endsWith(".cpp") ||    // ✅ C++
-        file.path.endsWith(".c") ||
-        file.path.endsWith(".h") ||
-        file.path.endsWith(".java") ||   // ✅ Java
-        file.path.endsWith(".go")        // ✅ Go
-        )
-    )
-    .slice(0, 5);
+    // 3️⃣ Select meaningful files only
+    const importantFiles = tree
+      .filter(
+        (file) =>
+          file.type === "blob" &&
+          (
+            file.path.endsWith(".js") ||
+            file.path.endsWith(".jsx") ||
+            file.path.endsWith(".ts") ||
+            file.path.endsWith(".tsx") ||
+            file.path.endsWith(".py") ||
+            file.path.endsWith(".java") ||
+            file.path.endsWith(".go") ||
+            file.path.endsWith(".cs") ||
+            file.path.endsWith(".cpp") ||
+            file.path.endsWith(".c") ||
+            file.path.endsWith(".json") ||
+            file.path.endsWith(".yml") ||
+            file.path.endsWith(".yaml") ||
+            file.path.endsWith("Dockerfile")
+          )
+      )
+      .slice(0, 8); // ⬅ limit AI cost
 
-  const codeSnippets = [];
+    const codeSnippets = [];
 
-  for (const file of importantFiles) {
-    try {
-      const fileRes = await githubClient.get(
-        `/repos/${owner}/${repo}/contents/${file.path}`
-      );
+    for (const file of importantFiles) {
+      try {
+        const fileRes = await githubClient.get(
+          `/repos/${owner}/${repo}/contents/${file.path}`
+        );
 
-      const decoded = Buffer.from(
-        fileRes.data.content,
-        "base64"
-      ).toString("utf-8");
+        if (!fileRes.data?.content) continue;
 
-      codeSnippets.push({
-        path: file.path,              // ✅ FIXED
-        content: decoded.slice(0, 3000), // ✅ FIXED
-      });
-    } catch {
-      console.warn(`⚠️ Skipped file: ${file.path}`);
+        const decoded = Buffer.from(
+          fileRes.data.content,
+          "base64"
+        ).toString("utf-8");
+
+        codeSnippets.push({
+          path: file.path,
+          content: decoded.slice(0, 3500),
+        });
+      } catch {
+        console.warn(`⚠️ Skipped file: ${file.path}`);
+      }
     }
-  }
 
-  return codeSnippets;
+    return codeSnippets;
+  } catch (err) {
+    console.error("❌ parseFiles failed:", err.message);
+    return []; // NEVER throw
+  }
 }
