@@ -1,30 +1,39 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { Code2, User, LogOut, Settings } from 'lucide-react';
-import { useMember } from '@/integrations';
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Code2, User, LogOut, Settings } from "lucide-react";
+import { useMember } from "@/integrations";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/context/SidebarContext";
 
 export default function Header() {
   const navigate = useNavigate();
   const { member, isAuthenticated, actions } = useMember();
+  const { analysisId } = useParams();
+  const { toggle } = useSidebar();
+
+  const basePath = analysisId ? `/analysis/${analysisId}` : "";
 
   const handleLogout = async () => {
     await actions.logout();
-    navigate('/');
+    navigate("/");
   };
 
   const handleSettings = () => {
-    navigate('/profile');
+    navigate("/profile");
   };
+
+  
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-[120rem] items-center justify-between px-8">
+        
+
         <Link to="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-neon-teal to-secondary">
             <Code2 className="h-6 w-6 text-black" />
@@ -41,30 +50,51 @@ export default function Header() {
           >
             Dashboard
           </Link>
-          <Link
-            to="/code-quality"
-            className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
-          >
-            Code Quality
-          </Link>
-          <Link
-            to="/code-review"
-            className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
-          >
-            AI Review
-          </Link>
-          <Link
-            to="/developer-skills"
-            className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
-          >
-            Skills Profile
-          </Link>
-          <Link
-            to="/best-practices"
-            className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
-          >
-            Best Practices
-          </Link>
+          {analysisId ? (
+            <>
+              <Link
+                to={`${basePath}/code-quality`}
+                className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
+              >
+                Code Quality
+              </Link>
+              <Link
+                to={`${basePath}/code-review`}
+                className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
+              >
+                AI Review
+              </Link>
+              <Link
+                to={`${basePath}/developer-skills`}
+                className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
+              >
+                Skills Profile
+              </Link>
+              <Link
+                to={`${basePath}/best-practices`}
+                className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
+              >
+                Best Practices
+              </Link>
+            </>
+          ) : (
+            <>
+              {/* Disabled links (same UI, no navigation) */}
+              {[
+                "Code Quality",
+                "AI Review",
+                "Skills Profile",
+                "Best Practices",
+              ].map((label) => (
+                <span
+                  key={label}
+                  className="font-paragraph text-sm text-foreground/40 cursor-not-allowed"
+                >
+                  {label}
+                </span>
+              ))}
+            </>
+          )}
         </nav>
 
         <DropdownMenu>
@@ -83,7 +113,7 @@ export default function Header() {
             {isAuthenticated && (
               <>
                 <div className="px-2 py-1.5 text-xs font-paragraph text-foreground/60">
-                  {member?.loginEmail || 'User'}
+                  {member?.loginEmail || "User"}
                 </div>
                 <DropdownMenuItem
                   onClick={handleSettings}

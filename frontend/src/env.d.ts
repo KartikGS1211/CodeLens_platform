@@ -10,13 +10,16 @@ declare global {
     strict: true;
   }
 
-  interface ImportMeta {
-    readonly env: ImportMetaEnv;
-  }
+  /// <reference types="astro/client" />
 
-  interface ImportMetaEnv {
-    readonly BASE_NAME: string;
-  }
+interface ImportMetaEnv {
+  VITE_API_BASE_URL: any;
+  readonly PUBLIC_API_BASE_URL: string
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}
 }
 
 declare module "react-router-dom" {

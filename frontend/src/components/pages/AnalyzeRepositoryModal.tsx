@@ -5,11 +5,13 @@ import { X, Github } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState } from "react"
 
+
 interface Props {
   open: boolean
   onClose: () => void
   onAnalyze: (url: string) => void
 }
+
 
 export default function AnalyzeRepositoryModal({
   open,

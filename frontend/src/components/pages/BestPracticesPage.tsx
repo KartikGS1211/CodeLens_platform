@@ -1,346 +1,219 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { BookOpen, CheckCircle, FileText, Image as ImageIcon, ExternalLink } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
-import { ArchitectureBestPractices } from '@/entities';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image } from '@/components/ui/image';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  BookOpen,
+  FileText,
+  CheckCircle,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useParams } from "react-router-dom";
+import { useBestPracticesAndArchitecture } from "@/hooks/useBestPracticesAndArchitecture";
+
+/* -------------------------------- TYPES -------------------------------- */
+
+type PracticeItem = {
+  id: string;
+  title: string;
+  description: string;
+  category: "AI" | "Architecture";
+};
+
+/* -------------------------------- PAGE -------------------------------- */
 
 export default function BestPracticesPage() {
-  const [practices, setPractices] = useState<ArchitectureBestPractices[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const { analysisId } = useParams();
+  const { bestPractices, architecture, loading } =
+    useBestPracticesAndArchitecture(analysisId);
 
-  useEffect(() => {
-    loadPractices();
-  }, []);
+  const [selectedCategory, setSelectedCategory] = useState<"all" | "AI" | "Architecture">("all");
 
-  const loadPractices = async () => {
-    try {
-      const { items } = await BaseCrudService.getAll<ArchitectureBestPractices>(
-        'architecturebestpractices'
-      );
-      setPractices(items);
-    } catch (error) {
-      console.error('Error loading practices:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  /* ---------------- NORMALIZE DATA ---------------- */
 
-  const categories = ['all', ...new Set(practices.map((p) => p.category).filter(Boolean))];
+  const aiPractices: PracticeItem[] = bestPractices.map((text, index) => ({
+    id: `ai-${index}`,
+    title: "AI Best Practice",
+    description: text,
+    category: "AI",
+  }));
+
+  const architecturePractices: PracticeItem[] = architecture
+    ? [
+        {
+          id: "arch-pattern",
+          title: "Architecture Pattern",
+          description: architecture.pattern,
+          category: "Architecture",
+        },
+        {
+          id: "arch-scalability",
+          title: "Scalability",
+          description: architecture.scalability,
+          category: "Architecture",
+        },
+        {
+          id: "arch-soc",
+          title: "Separation of Concerns",
+          description: architecture.separationOfConcerns,
+          category: "Architecture",
+        },
+      ]
+    : [];
+
+  const allPractices = [...architecturePractices, ...aiPractices];
 
   const filteredPractices =
-    selectedCategory === 'all'
-      ? practices
-      : practices.filter((p) => p.category === selectedCategory);
+    selectedCategory === "all"
+      ? allPractices
+      : allPractices.filter((p) => p.category === selectedCategory);
 
-  const getCategoryColor = (category?: string) => {
-    const colors: Record<string, string> = {
-      Architecture: 'neon-teal',
-      Security: 'destructive',
-      Performance: 'secondary',
-      Testing: 'neon-teal',
-      'Code Quality': 'secondary',
-    };
-    return colors[category || ''] || 'neon-teal';
-  };
+  /* ---------------- LOADING ---------------- */
+
+  if (loading) {
+    return (
+      <div className="px-8 py-16 text-neon-teal text-sm">
+        Loading architecture & best practices…
+      </div>
+    );
+  }
+
+  /* ---------------- RENDER ---------------- */
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <Sidebar />
+    <div className="w-full px-10 py-12">
+      {/* HEADER */}
+      <motion.div
+        className="mb-16"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-8 w-8 text-neon-teal" />
+          <h1 className="text-4xl font-bold text-white">
+            Architecture & Best Practices
+          </h1>
+        </div>
+        <p className="mt-4 text-foreground/60">
+          AI-driven architecture insights and best engineering practices
+        </p>
+      </motion.div>
 
-      <main className="ml-0 px-8 py-16 md:ml-64">
-        <div className="mx-auto max-w-[120rem]">
-          {/* Page Header */}
-          <motion.div
-            className="mb-16"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-center gap-3">
-              <BookOpen className="h-8 w-8 text-neon-teal" />
-              <h1 className="font-heading text-5xl font-bold text-white">
-                Architecture & Best Practices
-              </h1>
+      {/* ================= ARCHITECTURE OVERVIEW ================= */}
+      {architecture && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-16"
+        >
+         <Card className="w-full p-8 bg-gradient-to-br from-neon-teal/10 to-transparent border-neon-teal/30">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              Architecture Overview
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <p className="text-sm text-foreground/60">Pattern</p>
+                <p className="mt-2 text-xl font-bold text-neon-teal">
+                  {architecture.pattern}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-foreground/60">Scalability</p>
+                <p className="mt-2 text-xl font-bold text-white">
+                  {architecture.scalability}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-foreground/60">
+                  Separation of Concerns
+                </p>
+                <p className="mt-2 text-xl font-bold text-white">
+                  {architecture.separationOfConcerns}
+                </p>
+              </div>
             </div>
-            <p className="mt-4 font-paragraph text-lg text-foreground/70">
-              Comprehensive guidelines and patterns for building robust applications
-            </p>
-          </motion.div>
+          </Card>
+        </motion.div>
+      )}
 
-          {/* Stats */}
-          <div className="mb-16 grid grid-cols-1 gap-8 md:grid-cols-4">
-            {[
-              { label: 'Total Guidelines', value: practices.length },
-              { label: 'Categories', value: categories.length - 1 },
-              { label: 'With Diagrams', value: practices.filter((p) => p.diagram).length },
-              { label: 'Compliance Rules', value: practices.filter((p) => p.complianceGuidelines).length },
-            ].map((stat, index) => (
+      {/* ================= TABS ================= */}
+      <Tabs className="w-full"
+        defaultValue="all"
+        onValueChange={(v) =>
+          setSelectedCategory(v as "all" | "AI" | "Architecture")
+        }
+      >
+        <TabsList className="mb-10 bg-white/5 border border-white/10">
+          <TabsTrigger value="all">
+            All ({allPractices.length})
+          </TabsTrigger>
+          <TabsTrigger value="Architecture">
+            Architecture ({architecturePractices.length})
+          </TabsTrigger>
+          <TabsTrigger value="AI">
+            AI Best Practices ({aiPractices.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={selectedCategory}>
+          <div className="space-y-8">
+            {filteredPractices.map((practice, index) => (
               <motion.div
-                key={stat.label}
+                key={practice.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
               >
-                <Card className="border-white/10 bg-white/5 p-8 backdrop-blur-lg">
-                  <p className="font-paragraph text-sm text-foreground/60">
-                    {stat.label}
-                  </p>
-                  <p className="mt-4 font-heading text-4xl font-bold text-white">
-                    {stat.value}
-                  </p>
+                <Card className="p-8 bg-white/5 border-white/10 hover:border-neon-teal/30 transition">
+                  <div className="flex gap-6">
+                    <div
+                      className={`p-3 rounded-lg ${
+                        practice.category === "AI"
+                          ? "bg-secondary/10"
+                          : "bg-neon-teal/10"
+                      }`}
+                    >
+                      {practice.category === "AI" ? (
+                        <CheckCircle className="h-6 w-6 text-secondary" />
+                      ) : (
+                        <FileText className="h-6 w-6 text-neon-teal" />
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-bold text-white">
+                        {practice.title}
+                      </h3>
+
+                      <span
+                        className={`inline-block mt-2 px-3 py-1 text-xs rounded-full ${
+                          practice.category === "AI"
+                            ? "bg-secondary/10 text-secondary"
+                            : "bg-neon-teal/10 text-neon-teal"
+                        }`}
+                      >
+                        {practice.category}
+                      </span>
+
+                      <p className="mt-4 text-sm text-foreground/70">
+                        {practice.description}
+                      </p>
+                    </div>
+                  </div>
                 </Card>
               </motion.div>
             ))}
+
+            {filteredPractices.length === 0 && (
+              <div className="text-center text-foreground/60 py-16">
+                No data available
+              </div>
+            )}
           </div>
-
-          {/* Category Tabs */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Tabs
-              defaultValue="all"
-              className="w-full"
-              onValueChange={setSelectedCategory}
-            >
-              <TabsList className="mb-8 flex flex-wrap border border-white/10 bg-white/5 p-1">
-                {categories.map((category) => (
-                  <TabsTrigger
-                    key={category}
-                    value={category}
-                    className="font-paragraph capitalize data-[state=active]:bg-neon-teal data-[state=active]:text-black"
-                  >
-                    {category === 'all' ? 'All' : category} (
-                    {category === 'all'
-                      ? practices.length
-                      : practices.filter((p) => p.category === category).length}
-                    )
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              <TabsContent value={selectedCategory}>
-                {loading ? (
-                  <div className="flex items-center justify-center py-24">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-neon-teal border-t-transparent"></div>
-                  </div>
-                ) : filteredPractices.length === 0 ? (
-                  <Card className="border-white/10 bg-white/5 p-16 text-center backdrop-blur-lg">
-                    <BookOpen className="mx-auto h-16 w-16 text-foreground/20" />
-                    <p className="mt-4 font-paragraph text-foreground/60">
-                      No best practices found
-                    </p>
-                  </Card>
-                ) : (
-                  <div className="space-y-8">
-                    {filteredPractices.map((practice, index) => (
-                      <motion.div
-                        key={practice._id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <Card className="border-white/10 bg-white/5 p-8 backdrop-blur-lg transition-all hover:border-neon-teal/30">
-                          <div className="flex items-start gap-6">
-                            <div
-                              className={`rounded-lg bg-${getCategoryColor(
-                                practice.category
-                              )}/10 p-3`}
-                            >
-                              <FileText
-                                className={`h-6 w-6 text-${getCategoryColor(
-                                  practice.category
-                                )}`}
-                              />
-                            </div>
-
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <h3 className="font-heading text-2xl font-bold text-white">
-                                    {practice.title}
-                                  </h3>
-                                  {practice.category && (
-                                    <span
-                                      className={`mt-2 inline-block rounded-full border border-${getCategoryColor(
-                                        practice.category
-                                      )}/30 bg-${getCategoryColor(
-                                        practice.category
-                                      )}/10 px-3 py-1 font-paragraph text-xs text-${getCategoryColor(
-                                        practice.category
-                                      )}`}
-                                    >
-                                      {practice.category}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {practice.description && (
-                                <div className="mt-6">
-                                  <h4 className="font-paragraph text-sm font-medium text-foreground/80">
-                                    Description
-                                  </h4>
-                                  <p className="mt-2 font-paragraph text-sm text-foreground/70">
-                                    {practice.description}
-                                  </p>
-                                </div>
-                              )}
-
-                              {practice.examples && (
-                                <div className="mt-6">
-                                  <h4 className="font-paragraph text-sm font-medium text-foreground/80">
-                                    Examples
-                                  </h4>
-                                  <div className="mt-3 overflow-hidden rounded-lg border border-white/10 bg-deep-space-blue/50">
-                                    <pre className="overflow-x-auto p-6">
-                                      <code className="font-paragraph text-sm text-neon-teal">
-                                        {practice.examples}
-                                      </code>
-                                    </pre>
-                                  </div>
-                                </div>
-                              )}
-
-                              {practice.complianceGuidelines && (
-                                <div className="mt-6">
-                                  <h4 className="flex items-center gap-2 font-paragraph text-sm font-medium text-foreground/80">
-                                    <CheckCircle className="h-4 w-4 text-neon-teal" />
-                                    Compliance Guidelines
-                                  </h4>
-                                  <p className="mt-2 font-paragraph text-sm text-foreground/70">
-                                    {practice.complianceGuidelines}
-                                  </p>
-                                </div>
-                              )}
-
-                              {practice.diagram && (
-                                <div className="mt-6">
-                                  <h4 className="flex items-center gap-2 font-paragraph text-sm font-medium text-foreground/80">
-                                    <ImageIcon className="h-4 w-4 text-secondary" />
-                                    Architecture Diagram
-                                  </h4>
-                                  <div className="mt-3 overflow-hidden rounded-lg border border-white/10 bg-deep-space-blue/50">
-                                    <Image
-                                      src={practice.diagram}
-                                      alt={practice.title || 'Architecture diagram'}
-                                      className="h-auto w-full"
-                                      width={800}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="mt-6 flex gap-3">
-                                <button 
-                                  onClick={() => alert(`Learn more about: ${practice.title}`)}
-                                  className="flex items-center gap-2 rounded-lg bg-neon-teal px-4 py-2 font-paragraph text-sm font-medium text-black transition-all hover:bg-neon-teal/90 cursor-pointer"
-                                >
-                                  <ExternalLink className="h-4 w-4" />
-                                  Learn More
-                                </button>
-                                <button 
-                                  onClick={() => alert(`Applied to project: ${practice.title}`)}
-                                  className="rounded-lg border border-white/10 bg-transparent px-4 py-2 font-paragraph text-sm font-medium text-foreground/80 transition-all hover:bg-white/5 cursor-pointer"
-                                >
-                                  Apply to Project
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </motion.div>
-
-          {/* Quick Reference */}
-          <motion.div
-            className="mt-16"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <h3 className="mb-8 font-heading text-2xl font-bold text-white">
-              Quick Reference
-            </h3>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-              {[
-                {
-                  title: 'SOLID Principles',
-                  description: 'Five design principles for maintainable software',
-                  items: [
-                    'Single Responsibility',
-                    'Open/Closed',
-                    'Liskov Substitution',
-                    'Interface Segregation',
-                    'Dependency Inversion',
-                  ],
-                },
-                {
-                  title: 'Design Patterns',
-                  description: 'Common solutions to recurring problems',
-                  items: [
-                    'Singleton',
-                    'Factory',
-                    'Observer',
-                    'Strategy',
-                    'Decorator',
-                  ],
-                },
-                {
-                  title: 'Code Smells',
-                  description: 'Warning signs in your codebase',
-                  items: [
-                    'Duplicated Code',
-                    'Long Methods',
-                    'Large Classes',
-                    'Too Many Parameters',
-                    'Feature Envy',
-                  ],
-                },
-              ].map((ref, index) => (
-                <motion.div
-                  key={ref.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
-                >
-                  <Card className="border-white/10 bg-white/5 p-8 backdrop-blur-lg">
-                    <h4 className="font-heading text-xl font-bold text-white">
-                      {ref.title}
-                    </h4>
-                    <p className="mt-2 font-paragraph text-sm text-foreground/60">
-                      {ref.description}
-                    </p>
-                    <ul className="mt-6 space-y-2">
-                      {ref.items.map((item) => (
-                        <li
-                          key={item}
-                          className="flex items-center gap-2 font-paragraph text-sm text-foreground/70"
-                        >
-                          <div className="h-1.5 w-1.5 rounded-full bg-neon-teal"></div>
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </main>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -31,6 +31,7 @@ export interface ArchitectureBestPractices {
  * Interface for Repositories
  */
 export interface Repositories {
+  analysisId: any;
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;
