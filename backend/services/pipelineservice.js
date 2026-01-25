@@ -121,17 +121,22 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
 
         codeQuality: safeCodeQuality,
         architecture: aiResult.architecture ?? {},
-        review: aiResult.review ?? {},
-        bestPractices: aiResult.bestPractices ?? [],
+        review: {
+          strengths: aiResult.review?.strengths ?? [],
+          weaknesses: aiResult.review?.weaknesses ?? [],
+          suggestions: aiResult.review?.suggestions ?? [],
+        },
+
         redFlags: aiResult.redFlags ?? [],
+        architecture: aiResult.architecture ?? {},
+        bestPractices: aiResult.bestPractices ?? [],
+        
 
         skillSummary:
-          aiResult.skillSummary ||
-          calculateSkillsLevel(safeCodeQuality),
+          aiResult.skillSummary || calculateSkillsLevel(safeCodeQuality),
 
         overallVerdict:
-          aiResult.overallVerdict ||
-          "Analysis completed successfully",
+          aiResult.overallVerdict || "Analysis completed successfully",
 
         source: isFallback ? "fallback" : "ai",
         analyzedAt: new Date(),

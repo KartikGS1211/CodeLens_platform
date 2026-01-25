@@ -8,35 +8,25 @@ export async function startAnalysis(req, res) {
   try {
     const { repoUrl } = req.body;
 
-    if (!repoUrl?.startsWith("https://github.com/")) {
+    if (!repoUrl || !repoUrl.startsWith("https://github.com/")) {
       return res.status(400).json({ error: "Invalid GitHub repository URL" });
     }
 
     const parts = repoUrl.replace(/\/$/, "").split("/");
+    if (parts.length < 5) {
+      return res.status(400).json({ error: "Invalid GitHub repository format" });
+    }
+
     const owner = parts[3];
     const repoName = parts[4];
 
-    // Create analysis record
-    const analysis = await prisma.analysis.create({
-      data: {
-        repoUrl,
-        repoName,
-        languages: [],
-        status: "processing",
-        source:"pending", 
-      },
-    });
-
-    // Upsert repository & link analysis (1–1)
-    await prisma.repository.upsert({
+    // 1️⃣ UPSERT REPOSITORY FIRST
+    const repository = await prisma.repository.upsert({
       where: { repositoryUrl: repoUrl },
       update: {
         repositoryName: repoName,
         owner,
         status: "analyzing",
-        analysis: {
-          connect: { id: analysis.id },
-        },
         lastSyncDate: new Date(),
       },
       create: {
@@ -44,27 +34,63 @@ export async function startAnalysis(req, res) {
         repositoryName: repoName,
         owner,
         status: "analyzing",
-        analysis: {
-          connect: { id: analysis.id },
-        },
         lastSyncDate: new Date(),
       },
     });
 
-    // Run pipeline asynchronously
-    runAnalysisPipeline(analysis.id, repoUrl).catch(err =>
-      console.error("❌ Pipeline async error:", err)
+    // 2️⃣ CHECK IF ANALYSIS ALREADY EXISTS
+    let analysis = await prisma.analysis.findUnique({
+      where: { repositoryId: repository.id },
+    });
+
+    if (analysis) {
+      // 🔁 RESET EXISTING ANALYSIS
+      analysis = await prisma.analysis.update({
+        where: { id: analysis.id },
+        data: {
+          status: "processing",
+          source: "pending",
+          analyzedAt: null,
+          codeQuality: null,
+          architecture: null,
+          review: null,
+          bestPractices: null,
+          redFlags: null,
+          skillSummary: null,
+          overallVerdict: null,
+        },
+      });
+    } else {
+      // 🆕 CREATE NEW ANALYSIS
+      analysis = await prisma.analysis.create({
+        data: {
+          repoUrl,
+          repoName,
+          languages: [],
+          status: "processing",
+          source: "pending",
+          repositoryId: repository.id,
+        },
+      });
+    }
+
+    // 3️⃣ RUN PIPELINE ASYNC
+    runAnalysisPipeline(analysis.id, repoUrl).catch((err) =>
+      console.error("❌ Pipeline error:", err)
     );
 
-    return res.json({
+    return res.status(201).json({
       analysisId: analysis.id,
       status: "processing",
     });
   } catch (err) {
-    console.error("❌ startAnalysis failed:", err.message);
+    console.error("❌ startAnalysis failed:", err);
     return res.status(500).json({ error: "Failed to start analysis" });
   }
 }
+
+
+
 
 /**
  * OVERVIEW
@@ -79,33 +105,25 @@ export async function getOverview(req, res) {
       return res.status(404).json({ error: "Analysis not found" });
     }
 
-    if (analysis.status === "processing") {
-      return res.json({
-        status: "processing",
-        message: "Analysis still in progress",
-      });
-    }
-
-    if (analysis.status === "failed") {
-      return res.json({
-        status: "failed",
-        message: "Analysis failed. Check backend logs.",
-      });
-    }
-
+    // Always return same shape
     return res.json({
-      status: "completed",
-      repoName: analysis.repoName,
-      languages: analysis.languages,
-      commits: analysis.commits,
-      files: analysis.files,
+      id: analysis.id,
+      status: analysis.status,
+
+      repoName: analysis.repoName ?? "—",
+      languages: analysis.languages ?? [],
+      commits: analysis.commits ?? 0,
+      files: analysis.files ?? 0,
       analyzedAt: analysis.analyzedAt,
+
+      source: analysis.source,
     });
   } catch (err) {
-    console.error("❌ getOverview failed:", err.message);
+    console.error("❌ getOverview failed:", err);
     return res.status(500).json({ error: "Failed to fetch overview" });
   }
 }
+
 
 /**
  * CODE QUALITY
@@ -116,7 +134,6 @@ export async function getCodeQuality(req, res) {
       where: { id: req.params.id },
       select: {
         codeQuality: true,
-        source: true,
         status: true,
       },
     });
@@ -125,27 +142,39 @@ export async function getCodeQuality(req, res) {
       return res.status(404).json({ error: "Analysis not found" });
     }
 
+    // ⛔ still running → frontend must keep polling
     if (analysis.status !== "completed") {
       return res.json({
         status: analysis.status,
-        message: "Analysis not completed yet",
+        codeQuality: {
+          readability: 0,
+          maintainability: 0,
+          security: 0,
+          performance: 0,
+        },
       });
     }
 
     const cq = analysis.codeQuality ?? {};
 
     return res.json({
-      readability: Number(cq.readability ?? 7),
-      maintainability: Number(cq.maintainability ?? 7),
-      security: Number(cq.security ?? 7),
-      performance: Number(cq.performance ?? 7),
-      source: analysis.source,
+      status: "completed",
+      codeQuality: {
+        readability: Number(cq.readability ?? 0),
+        maintainability: Number(cq.maintainability ?? 0),
+        security: Number(cq.security ?? 0),
+        performance: Number(cq.performance ?? 0),
+      },
     });
   } catch (err) {
-    console.error("❌ getCodeQuality failed:", err.message);
+    console.error("❌ getCodeQuality failed:", err);
     return res.status(500).json({ error: "Failed to fetch code quality" });
   }
 }
+
+
+
+
 
 /**
  * ARCHITECTURE
@@ -182,7 +211,11 @@ export async function getAIReview(req, res) {
   try {
     const analysis = await prisma.analysis.findUnique({
       where: { id: req.params.id },
-      select: { review: true, status: true },
+      select: {
+        review: true,
+        redFlags: true,
+        status: true,
+      },
     });
 
     if (!analysis) {
@@ -191,17 +224,31 @@ export async function getAIReview(req, res) {
 
     if (analysis.status !== "completed") {
       return res.json({
+        review: {
+          strengths: [],
+          weaknesses: [],
+          suggestions: [],
+        },
+        redFlags: [],
         status: analysis.status,
-        message: "Analysis not completed yet",
       });
     }
 
-    return res.json(analysis.review ?? {});
+    return res.json({
+      review: analysis.review ?? {
+        strengths: [],
+        weaknesses: [],
+        suggestions: [],
+      },
+      redFlags: analysis.redFlags ?? [],
+      status: "completed",
+    });
   } catch (err) {
-    console.error("❌ getAIReview failed:", err.message);
-    return res.status(500).json({ error: "Failed to fetch AI review" });
+    console.error("❌ getAIReview failed:", err);
+    res.status(500).json({ error: "Failed to fetch AI review" });
   }
 }
+
 
 /**
  * SKILL SUMMARY
