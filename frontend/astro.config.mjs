@@ -8,12 +8,18 @@ import react from "@astrojs/react";
 import sourceAttrsPlugin from "@wix/babel-plugin-jsx-source-attrs";
 import dynamicDataPlugin from "@wix/babel-plugin-jsx-dynamic-data";
 import customErrorOverlayPlugin from "./vite-error-overlay-plugin.js";
+import path from "path"; 
 
-const isBuild = process.env.NODE_ENV == "production";
+import { fileURLToPath } from "url"; 
 
-// https://astro.build/config
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const isBuild = process.env.NODE_ENV === "production";
+
 export default defineConfig({
   output: "server",
+
   integrations: [
     {
       name: "framewire",
@@ -27,7 +33,7 @@ export default defineConfig({
                 const localUrl = 'http://localhost:3202/framewire/index.mjs';
                 const cdnUrl = \`https://static.parastorage.com/services/framewire/\${version}/index.mjs\`;
                 const url = version === 'local' ? localUrl : cdnUrl;
-                const framewireModule = await import(url);
+                const framewireModule = await import(/* @vite-ignore */ url);
                 globalThis.framewire = framewireModule;
                 framewireModule.init({}, import.meta.hot);
                 console.log('Framewire initialized');
@@ -37,26 +43,42 @@ export default defineConfig({
         },
       },
     },
+
     tailwind(),
+
     wix({
       htmlEmbeds: isBuild,
-      auth: true
+      auth: true,
     }),
+
     isBuild ? monitoring() : undefined,
-    react({ babel: { plugins: [sourceAttrsPlugin, dynamicDataPlugin] } }),
+
+    react({
+      babel: {
+        plugins: [sourceAttrsPlugin, dynamicDataPlugin],
+      },
+    }),
   ],
+
   vite: {
-    plugins: [
-      customErrorOverlayPlugin(),
-    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "src"), 
+      },
+    },
+    plugins: [customErrorOverlayPlugin()],
   },
+
   adapter: isBuild ? cloudProviderFetchAdapter({}) : undefined,
+
   devToolbar: {
     enabled: false,
   },
+
   image: {
     domains: ["static.wixstatic.com"],
   },
+
   server: {
     allowedHosts: true,
     host: true,
