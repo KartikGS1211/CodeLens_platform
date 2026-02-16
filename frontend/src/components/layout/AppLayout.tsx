@@ -1,21 +1,22 @@
 import { Outlet } from "react-router-dom";
-import Header from "@/components/layout/Header";
-import Sidebar from "@/components/layout/Sidebar";
+import { AnimatePresence } from "framer-motion";
+import Sidebar from "./Sidebar";
+import PageTransition from "./PageTransition";
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen bg-background text-white">
-      {/* ✅ SINGLE HEADER */}
-      <Header />
+    <div className="flex min-h-screen bg-background">
+      {/* SIDEBAR */}
+      <Sidebar />
 
-      <div className="flex h-screen w-full">
-        {/* ✅ SIDEBAR ONLY (NO HEADER INSIDE IT) */}
-        <Sidebar />
-
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
-        </main>
-      </div>
+      {/* CONTENT */}
+      <main className="flex-1 overflow-y-auto">
+        <AnimatePresence mode="wait">
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
+        </AnimatePresence>
+      </main>
     </div>
   );
 }

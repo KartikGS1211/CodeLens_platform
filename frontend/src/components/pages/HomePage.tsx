@@ -16,13 +16,14 @@ import {
   BookOpen,
   CheckCircle,
 } from "lucide-react";
-import { BaseCrudService } from "@/integrations";
+import { BaseCrudService } from "../../../integrations";
 import { Repositories } from "@/entities";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import AnalyzeRepositoryModal from "./AnalyzeRepositoryModal";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import AnimatedHeroGlow from "../ui/AnimatedHeroGlow";
 
 /* ---------- TYPES ---------- */
 type StatItem = {
@@ -82,7 +83,6 @@ export default function HomePage() {
       if (!analysisId) throw new Error("analysisId missing");
 
       await loadRepositories();
-
       navigate(`/analysis/${analysisId}/code-quality`);
     } catch (err: any) {
       alert(err?.response?.data?.message || "Failed to start analysis");
@@ -92,87 +92,66 @@ export default function HomePage() {
     }
   }
 
-  /* ---------- STATS ---------- */
-  const stats: StatItem[] = [
-    {
-      label: "Total Repositories",
-      value: repositories.length,
-      icon: GitBranch,
-      color: "neon-teal",
-    },
-    {
-      label: "Analyzing",
-      value: repositories.filter(r => r.status === "analyzing").length,
-      icon: Activity,
-      color: "secondary",
-    },
-    {
-      label: "Issues Found",
-      value: Math.floor(Math.random() * 40) + 10,
-      icon: AlertCircle,
-      color: "destructive",
-    },
-    {
-      label: "Code Quality",
-      value: "87%",
-      icon: TrendingUp,
-      color: "neon-teal",
-    },
-  ];
-
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case "completed":
-        return "text-neon-teal bg-neon-teal/10 border-neon-teal/30";
-      case "analyzing":
-        return "text-secondary bg-secondary/10 border-secondary/30";
-      case "failed":
-        return "text-destructive bg-destructive/10 border-destructive/30";
-      default:
-        return "text-foreground/50 border-white/10";
-    }
-  };
-
   /* ---------- SCROLL ---------- */
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
 
+  function getStatusColor(status: string) {
+    switch (status) {
+      case "completed":
+        return "border-green-500/50 text-green-400 bg-green-500/10";
+      case "running":
+        return "border-neon-teal/50 text-neon-teal bg-neon-teal/10";
+      case "failed":
+        return "border-red-500/50 text-red-400 bg-red-500/10";
+      case "pending":
+        return "border-yellow-500/50 text-yellow-400 bg-yellow-500/10";
+      default:
+        return "border-foreground/30 text-foreground/60 bg-foreground/5";
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Scroll progress bar */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-neon-teal z-50"
+        className="fixed top-0 left-0 right-0 h-1 bg-neon-teal z-50 origin-left"
         style={{ scaleX }}
       />
 
-      <main className="ml-0 md:ml-64">
+      {/* 🔥 REMOVE sidebar margin */}
+      <main className="w-full">
         {/* HERO */}
-        <section className="relative min-h-screen flex items-center justify-center pt-20">
+        <section className="relative min-h-screen flex items-center pt-24">
           <GridBackground />
+          <AnimatedHeroGlow/>
+          
+          <div className="w-full px-10 md:px-16 lg:px-24">
+            <div className="max-w-[1200px]">
+              <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight">
+                UNLEASH YOUR <br />
+                <span className="text-neon-teal">CODE POTENTIAL</span>
+              </h1>
 
-          <div className="max-w-7xl px-8">
-            <h1 className="text-6xl md:text-8xl font-bold mb-6">
-              UNLEASH YOUR <br />
-              <span className="text-neon-teal">CODE POTENTIAL</span>
-            </h1>
+              <p className="max-w-xl text-foreground/60 mb-10">
+                AI-powered code review & developer skill profiling platform.
+              </p>
 
-            <p className="max-w-xl text-foreground/60 mb-10">
-              AI-powered code review & developer skill profiling platform.
-            </p>
+              <div className="flex flex-wrap gap-4">
+                <button
+                  onClick={() => setOpenModal(true)}
+                  className="px-8 py-4 bg-neon-teal text-black font-bold rounded-lg hover:bg-neon-teal/90 transition"
+                >
+                  Initialize Analysis
+                </button>
 
-            <div className="flex gap-4">
-              <button
-                onClick={() => setOpenModal(true)}
-                className="px-8 py-4 bg-neon-teal text-black font-bold"
-              >
-                Initialize Analysis
-              </button>
-
-              <button
-                onClick={() => setOpenModal(true)}
-                className="px-8 py-4 border border-white/20"
-              >
-                Add Repository
-              </button>
+                <button
+                  onClick={() => setOpenModal(true)}
+                  className="px-8 py-4 border border-white/20 rounded-lg hover:bg-white/5 transition"
+                >
+                  Add Repository
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -191,7 +170,7 @@ export default function HomePage() {
         )}
 
         {/* REPOSITORIES */}
-        <section className="py-32 px-8">
+        <section className="py-32 px-10 md:px-16 lg:px-24">
           {loading ? (
             <div className="h-96 flex items-center justify-center">
               <div className="w-12 h-12 border-4 border-neon-teal border-t-transparent rounded-full animate-spin" />
@@ -201,7 +180,7 @@ export default function HomePage() {
               {repositories.map(repo => (
                 <Card
                   key={repo._id}
-                  className="cursor-pointer border-white/10 bg-white/5 hover:border-neon-teal/50"
+                  className="cursor-pointer border-white/10 bg-white/5 hover:border-neon-teal/50 transition"
                   onClick={() => {
                     if (!repo.analysisId) {
                       alert("Analysis not ready yet");
@@ -225,7 +204,9 @@ export default function HomePage() {
                         {repo.status}
                       </span>
                     </div>
-                    <h3 className="text-xl font-bold">{repo.repositoryName}</h3>
+                    <h3 className="text-xl font-bold">
+                      {repo.repositoryName}
+                    </h3>
                     <p className="text-xs text-foreground/50">
                       {repo.owner || "Unknown"}
                     </p>

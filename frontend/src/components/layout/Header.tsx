@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Code2, User, LogOut, Settings } from "lucide-react";
-import { useMember } from "@/integrations";
+import { useMember } from "../../../integrations";
 import {
   DropdownMenu,
   DropdownMenuContent,

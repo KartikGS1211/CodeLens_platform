@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import { useMember } from '@/integrations';
-import { SignIn } from '@/components/ui/sign-in';
+import { useMember } from '../../../integrations';
+import { SignIn } from './sign-in';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface SignInProps {

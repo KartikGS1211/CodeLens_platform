@@ -17,9 +17,8 @@
     "noUncheckedIndexedAccess": false,
     "exactOptionalPropertyTypes": false,
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
+      "@/*": ["src/*"],
+      
       "@/components/*": [
         "src/components/*"
       ],
@@ -39,3 +38,4 @@
     "integrations"
   ]
 }
+

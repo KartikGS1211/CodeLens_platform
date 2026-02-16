@@ -1,5 +1,6 @@
 import { members } from "@wix/members";
 import { Member } from ".";
+import { useEffect, useState } from "react";
 
 export const getCurrentMember = async (): Promise<Member | null> => {
   try {
@@ -13,3 +14,20 @@ export const getCurrentMember = async (): Promise<Member | null> => {
     return null;
   }
 };
+
+export function useMemberService() {
+  const [member, setMember] = useState<Member | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getCurrentMember()
+      .then(setMember)
+      .finally(() => setLoading(false));
+  }, []);
+
+  return {
+    member,
+    loading,
+    isAuthenticated: !!member,
+  };
+}
