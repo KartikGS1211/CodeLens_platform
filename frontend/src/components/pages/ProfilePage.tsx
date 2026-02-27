@@ -20,8 +20,6 @@ function ProfilePageContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      <Sidebar />
 
       <main className="ml-0 px-8 py-16 md:ml-64">
         <div className="mx-auto max-w-[120rem]">
