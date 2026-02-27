@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/apiClient";
+import { set } from "date-fns";
 
-/**
+/**A
  * Hook to fetch Skill Summary for an analysis
  * Backend: GET /analysis/:analysisId/skill-summary
  */
 export function useSkillSummary(analysisId?: string) {
   const [skillSummary, setSkillSummary] = useState<string>("");
+  const [overallVerdict, setOverallVerdict] = useState<string>("");
   const [status, setStatus] = useState<string>("processing");
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!analysisId) return;
 
-    let interval: NodeJS.Timeout;
+    setLoading(true);
+    setSkillSummary("");
+    setOverallVerdict("");
+
+
+    let interval: ReturnType<typeof setInterval>;
 
     async function fetchSkillSummary() {
       try {
@@ -21,14 +28,18 @@ export function useSkillSummary(analysisId?: string) {
           `/analysis/${analysisId}/skill-summary`
         );
 
+        const { status, overallVerdict , skillSummary } = res.data;
+
         // If analysis still running → keep polling
         if (res.data.status && res.data.status !== "completed") {
           setStatus(res.data.status);
+          setOverallVerdict(overallVerdict ?? "");
           return;
         }
 
         // Analysis completed
         setSkillSummary(res.data.skillSummary ?? "");
+        setOverallVerdict(overallVerdict ?? "");
         setStatus("completed");
         setLoading(false);
         clearInterval(interval);
@@ -50,6 +61,7 @@ export function useSkillSummary(analysisId?: string) {
 
   return {
     skillSummary,
+    overallVerdict,
     status,
     loading,
   };

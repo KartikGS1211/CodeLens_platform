@@ -23,6 +23,8 @@ type PracticeItem = {
 
 export default function BestPracticesPage() {
   const { analysisId } = useParams();
+  console.log("analysisId:", analysisId);
+
   const { bestPractices, architecture, loading } =
     useBestPracticesAndArchitecture(analysisId);
 

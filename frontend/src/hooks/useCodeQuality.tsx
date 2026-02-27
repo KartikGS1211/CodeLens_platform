@@ -8,7 +8,7 @@ export function useCodeQuality(analysisId?: string) {
   useEffect(() => {
     if (!analysisId) return;
 
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
 
     async function fetchCodeQuality() {
       try {
@@ -16,13 +16,25 @@ export function useCodeQuality(analysisId?: string) {
           `/analysis/${analysisId}/code-quality`
         );
 
-        // ⛔ wait until analysis is done
-        if (res.data.status !== "completed") {
-          return;
-        }
+        const {
+          status,
+          qualityDimensions,
+          qualityTrend,
+          moduleComplexity,
+          recentIssues,
+        } = res.data;
 
-        // ✅ IMPORTANT: store ONLY codeQuality
-        setData(res.data.codeQuality);
+        // still processing → keep polling
+        if (status !== "completed") return;
+
+        // ✅ save full object
+        setData({
+          qualityDimensions,
+          qualityTrend,
+          moduleComplexity,
+          recentIssues,
+        });
+
         setLoading(false);
         clearInterval(interval);
       } catch (err) {
@@ -32,7 +44,7 @@ export function useCodeQuality(analysisId?: string) {
     }
 
     fetchCodeQuality();
-    interval = setInterval(fetchCodeQuality, 4000);
+    interval = setInterval(fetchCodeQuality, 3000);
 
     return () => clearInterval(interval);
   }, [analysisId]);

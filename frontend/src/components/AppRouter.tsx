@@ -44,6 +44,10 @@ export default function AppRouter() {
         element: <AnalysisOverviewPage />
       },
       {
+        path: "overview",
+        element: <AnalysisOverviewPage />
+      },
+      {
         path: "code-quality",
         element: <CodeQualityPage />,
       },

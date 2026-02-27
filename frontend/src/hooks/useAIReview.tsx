@@ -18,7 +18,7 @@ export function useAIReview(analysisId?: string) {
   useEffect(() => {
     if (!analysisId) return;
 
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
 
     async function fetchAIReview() {
       try {
@@ -26,20 +26,22 @@ export function useAIReview(analysisId?: string) {
           `/analysis/${analysisId}/ai-review`
         );
 
+        const { status, review, redFlags } = res.data;
+
         setData({
           review: {
-            strengths: res.data.review?.strengths ?? [],
-            weaknesses: res.data.review?.weaknesses ?? [],
-            suggestions: res.data.review?.suggestions ?? [],
+            strengths: review?.strengths ?? [],
+            weaknesses: review?.weaknesses ?? [],
+            suggestions: review?.suggestions ?? [],
           },
-          redFlags: res.data.redFlags ?? [],
-          status: res.data.status ?? "processing",
+          redFlags: redFlags ?? [],
+          status: status ?? "processing",
         });
 
         // ✅ stop polling only when finished
         if (
-          res.data.status === "completed" ||
-          res.data.status === "failed"
+          status === "completed" ||
+          status === "failed"
         ) {
           clearInterval(interval);
           setLoading(false);

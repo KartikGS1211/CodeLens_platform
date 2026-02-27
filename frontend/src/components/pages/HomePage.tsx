@@ -16,7 +16,7 @@ import {
   BookOpen,
   CheckCircle,
 } from "lucide-react";
-import { BaseCrudService } from "../../../integrations";
+import { getRepositories } from "../../services/repositoryService";
 import { Repositories } from "@/entities";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
@@ -24,6 +24,7 @@ import AnalyzeRepositoryModal from "./AnalyzeRepositoryModal";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import AnimatedHeroGlow from "../ui/AnimatedHeroGlow";
+import { Repository } from "../../types/repository";
 
 /* ---------- TYPES ---------- */
 type StatItem = {
@@ -43,7 +44,7 @@ const GridBackground = () => (
 
 /* ---------- MAIN ---------- */
 export default function HomePage() {
-  const [repositories, setRepositories] = useState<Repositories[]>([]);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [startingAnalysis, setStartingAnalysis] = useState(false);
@@ -60,10 +61,11 @@ export default function HomePage() {
   const loadRepositories = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const { items } = await BaseCrudService.getAll<Repositories>("repositories");
-      setRepositories(items);
+
+      const data = await getRepositories();
+      setRepositories(data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load repositories", err);
     } finally {
       if (!silent) setLoading(false);
     }
@@ -75,15 +77,15 @@ export default function HomePage() {
       setStartingAnalysis(true);
 
       const res = await axios.post(
-        "http://localhost:5000/api/analysis/start",
-        { repoUrl }
-      );
+        "http://localhost:5000/api/analysis/start", {
+        repoUrl,
+      });
 
       const analysisId = res.data.analysisId;
       if (!analysisId) throw new Error("analysisId missing");
 
       await loadRepositories();
-      navigate(`/analysis/${analysisId}/code-quality`);
+      navigate(`/analysis/${analysisId}/overview`);
     } catch (err: any) {
       alert(err?.response?.data?.message || "Failed to start analysis");
     } finally {
@@ -94,7 +96,8 @@ export default function HomePage() {
 
   /* ---------- SCROLL ---------- */
   const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  const scaleX = useSpring(scrollYProgress, {
+     stiffness: 100, damping: 30 });
 
   function getStatusColor(status: string) {
     switch (status) {
@@ -112,20 +115,20 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen bg-black text-white overflow-hidden">
       {/* Scroll progress bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-neon-teal z-50 origin-left"
         style={{ scaleX }}
       />
 
-      {/* 🔥 REMOVE sidebar margin */}
-      <main className="w-full">
+      {/* REMOVE sidebar margin */}
+      <main className="relative z-10 w-full">
         {/* HERO */}
         <section className="relative min-h-screen flex items-center pt-24">
           <GridBackground />
-          <AnimatedHeroGlow/>
-          
+          <AnimatedHeroGlow />
+
           <div className="w-full px-10 md:px-16 lg:px-24">
             <div className="max-w-[1200px]">
               <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight">
@@ -133,7 +136,7 @@ export default function HomePage() {
                 <span className="text-neon-teal">CODE POTENTIAL</span>
               </h1>
 
-              <p className="max-w-xl text-foreground/60 mb-10">
+              <p className="max-w-xl text-white/60 mb-10 text-lg">
                 AI-powered code review & developer skill profiling platform.
               </p>
 
@@ -164,52 +167,64 @@ export default function HomePage() {
         />
 
         {startingAnalysis && (
-          <div className="text-center text-neon-teal mt-4 animate-pulse">
+          <div className="fixed bottom-10 right-10 bg-neon-teal text-black px-6 py-3 rounded-lg font-semibold shadow-lg animate-pulse">
             Initializing analysis pipeline...
           </div>
         )}
 
         {/* REPOSITORIES */}
-        <section className="py-32 px-10 md:px-16 lg:px-24">
+        <section className="px-10 md:px-16 lg:px-24 pb-32">
+          <h2 className="text-3xl font-bold mb-10">
+            Your Repositories</h2>
           {loading ? (
             <div className="h-96 flex items-center justify-center">
               <div className="w-12 h-12 border-4 border-neon-teal border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {repositories.map(repo => (
+              {repositories.map((repo) => (
                 <Card
-                  key={repo._id}
-                  className="cursor-pointer border-white/10 bg-white/5 hover:border-neon-teal/50 transition"
+                  key={repo.id}
+                  className="cursor-pointer border-white/10 bg-[#111] hover:border-neon-teal/50 transition-all duration-300 overflow-hidden"
                   onClick={() => {
-                    if (!repo.analysisId) {
+                    if (!repo.analysis?.id) {
                       alert("Analysis not ready yet");
                       return;
                     }
-                    if (repo.status !== "completed") {
+                    if (repo.analysis?.status !== "completed") {
                       alert("Analysis still running");
                       return;
                     }
-                    navigate(`/analysis/${repo.analysisId}/code-quality`);
+                    navigate(`/analysis/${repo.analysis.id}/overview`);
                   }}
                 >
-                  <div className="p-6 border-b border-white/10">
+                  <div className="p-6 border-b border-white/5 bg-white/[0.02]">
                     <div className="flex justify-between mb-4">
                       <GitBranch className="text-neon-teal" />
+                      
                       <span
                         className={`text-xs px-2 py-1 border rounded ${getStatusColor(
-                          repo.status
+                          repo.analysis?.status || repo.status
+
                         )}`}
                       >
-                        {repo.status}
+                        {repo.analysis?.status || repo.status}
+
                       </span>
                     </div>
-                    <h3 className="text-xl font-bold">
-                      {repo.repositoryName}
-                    </h3>
-                    <p className="text-xs text-foreground/50">
+
+                    <h3 className="text-xl font-bold">{repo.repositoryName}</h3>
+
+                    <p className="text-xs text-white/50 mt-1">
                       {repo.owner || "Unknown"}
                     </p>
+                  </div>
+
+                  <div className="p-6 text-sm text-white/60">
+                    {repo.analysis?.status === "completed" 
+                      ? "Click to view analysis results"
+                      : "Analysis not completed"
+                    }
                   </div>
                 </Card>
               ))}
@@ -217,7 +232,7 @@ export default function HomePage() {
           )}
         </section>
 
-        <footer className="py-12 text-center text-xs text-foreground/30">
+        <footer className="py-12 text-center text-xs text-white/30">
           © 2026 CodeLens AI — SYSTEM OPERATIONAL
         </footer>
       </main>
