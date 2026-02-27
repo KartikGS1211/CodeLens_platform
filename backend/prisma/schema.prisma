@@ -49,8 +49,15 @@ model Analysis {
   source         String             @default("pending") // pending | ai | fallback
   analyzedAt     DateTime?
 
+
+ // 🔹 NORMALIZED AI RESULTS //
+
+  qualityDimensions Json?      // readability, maintainability, security, performance...
+  qualityTrend      Json?      // [{month, score}]
+  moduleComplexity  Json?      // [{module, complexity}]
+  recentIssues      Json?
+
   // AI Results
-  codeQuality    Json?
   architecture   Json?
   review         Json?
   bestPractices  Json?
@@ -58,7 +65,13 @@ model Analysis {
   skillSummary   String?
   overallVerdict String?
 
-  //  FIX: repositoryId must be UNIQUE for 1–1
+  stackSkills   Json?
+  developerProfile Json?
+  achievements          Json?      
+  growthRecommendations Json?
+
+
+  // repositoryId must be UNIQUE for 1–1
   repositoryId   String?            @unique
   repository     Repository?        @relation(fields: [repositoryId], references: [id])
 

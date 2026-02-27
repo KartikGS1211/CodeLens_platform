@@ -14,7 +14,9 @@ export async function startAnalysis(req, res) {
 
     const parts = repoUrl.replace(/\/$/, "").split("/");
     if (parts.length < 5) {
-      return res.status(400).json({ error: "Invalid GitHub repository format" });
+      return res
+        .status(400)
+        .json({ error: "Invalid GitHub repository format" });
     }
 
     const owner = parts[3];
@@ -51,7 +53,14 @@ export async function startAnalysis(req, res) {
           status: "processing",
           source: "pending",
           analyzedAt: null,
-          codeQuality: null,
+
+          // 🔹 new code-quality fields
+          qualityDimensions: null,
+          qualityTrend: null,
+          moduleComplexity: null,
+          recentIssues: null,
+
+          // existing
           architecture: null,
           review: null,
           bestPractices: null,
@@ -76,7 +85,7 @@ export async function startAnalysis(req, res) {
 
     // 3️⃣ RUN PIPELINE ASYNC
     runAnalysisPipeline(analysis.id, repoUrl).catch((err) =>
-      console.error("❌ Pipeline error:", err)
+      console.error("❌ Pipeline error:", err),
     );
 
     return res.status(201).json({
@@ -88,9 +97,6 @@ export async function startAnalysis(req, res) {
     return res.status(500).json({ error: "Failed to start analysis" });
   }
 }
-
-
-
 
 /**
  * OVERVIEW
@@ -124,7 +130,6 @@ export async function getOverview(req, res) {
   }
 }
 
-
 /**
  * CODE QUALITY
  */
@@ -133,7 +138,10 @@ export async function getCodeQuality(req, res) {
     const analysis = await prisma.analysis.findUnique({
       where: { id: req.params.id },
       select: {
-        codeQuality: true,
+        qualityDimensions: true,
+        qualityTrend: true,
+        moduleComplexity: true,
+        recentIssues: true,
         status: true,
       },
     });
@@ -142,39 +150,25 @@ export async function getCodeQuality(req, res) {
       return res.status(404).json({ error: "Analysis not found" });
     }
 
-    // ⛔ still running → frontend must keep polling
     if (analysis.status !== "completed") {
-      return res.json({
+      return res.status(202).json({
         status: analysis.status,
-        codeQuality: {
-          readability: 0,
-          maintainability: 0,
-          security: 0,
-          performance: 0,
-        },
+        message: "Groq analysis not ready or failed",
       });
-    }
-
-    const cq = analysis.codeQuality ?? {};
-
+   }
+  
     return res.json({
       status: "completed",
-      codeQuality: {
-        readability: Number(cq.readability ?? 0),
-        maintainability: Number(cq.maintainability ?? 0),
-        security: Number(cq.security ?? 0),
-        performance: Number(cq.performance ?? 0),
-      },
+      qualityDimensions: analysis.qualityDimensions,
+      qualityTrend: analysis.qualityTrend,
+      moduleComplexity: analysis.moduleComplexity,
+      recentIssues: analysis.recentIssues || [],
     });
   } catch (err) {
-    console.error("❌ getCodeQuality failed:", err);
+    console.error(" getCodeQuality failed:", err);
     return res.status(500).json({ error: "Failed to fetch code quality" });
   }
 }
-
-
-
-
 
 /**
  * ARCHITECTURE
@@ -249,7 +243,6 @@ export async function getAIReview(req, res) {
   }
 }
 
-
 /**
  * SKILL SUMMARY
  */
@@ -257,22 +250,35 @@ export async function getSkillSummary(req, res) {
   try {
     const analysis = await prisma.analysis.findUnique({
       where: { id: req.params.id },
-      select: { skillSummary: true, status: true },
+      select: {
+        skillSummary: true,
+        overallVerdict: true,
+        status: true,
+        analyzedAt: true,
+      },
     });
 
     if (!analysis) {
-      return res.status(404).json({ error: "Analysis not found" });
+      return res.status(404).json({
+        success: false,
+        error: "Analysis not found",
+      });
     }
 
     if (analysis.status !== "completed") {
       return res.json({
+        success: true,
         status: analysis.status,
-        message: "Analysis not completed yet",
+        skillSummary: null,
       });
     }
 
     return res.json({
-      skillSummary: analysis.skillSummary ?? "Not available",
+      success: true,
+      status: "completed",
+      analyzedAt: analysis.analyzedAt,
+      skillSummary: analysis.skillSummary,
+      overallVerdict: analysis.overallVerdict,
     });
   } catch (err) {
     console.error("❌ getSkillSummary failed:", err.message);
@@ -356,7 +362,35 @@ export async function getRepositories(req, res) {
 
     return res.json({ repositories: repos });
   } catch (err) {
-    console.error("❌ getRepositories failed:", err.message);
+    console.error(" getRepositories failed:", err.message);
     return res.status(500).json({ error: "Failed to fetch repositories" });
   }
+}
+
+export async function getFullAnalysis(req, res) {
+  const analysisId = req.params.id;
+
+  if (!analysisId) {
+    return res.status(400).json({
+      success: false,
+      error: "analysisId is missing",
+    });
+  }
+
+  const analysis = await prisma.analysis.findUnique({
+    where: { id: analysisId },
+  });
+
+  if (!analysis) {
+    return res.status(404).json({
+      success: false,
+      error: "Analysis not found",
+    });
+  }
+
+  return res.json({
+    ...analysis,
+    achievements: analysis.achievements,
+    growthRecommendations: analysis.growthRecommendations,
+  });
 }

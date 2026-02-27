@@ -27,10 +27,9 @@ export async function fetchRepoData(owner, repo) {
     let commitCount = 0;
     try {
       const commitsRes = await githubClient.get(
-        `/repos/${owner}/${repo}/commits?per_page=1`
+        `/repos/${owner}/${repo}/commits?per_page=1`,
       );
-      const match =
-        commitsRes.headers.link?.match(/page=(\d+)>; rel="last"/);
+      const match = commitsRes.headers.link?.match(/page=(\d+)>; rel="last"/);
       commitCount = match ? Number(match[1]) : commitsRes.data.length;
     } catch {
       commitCount = 0;
@@ -56,24 +55,34 @@ export async function fetchRepoData(owner, repo) {
  */
 export async function parseFiles(owner, repo) {
   try {
-    // 1️⃣ Get default branch dynamically
+    //  Get default branch dynamically
     const repoRes = await githubClient.get(`/repos/${owner}/${repo}`);
     const branch = repoRes.data.default_branch;
 
-    // 2️⃣ Fetch repo tree
+    console.log("Default branch:", branch);
+
+    //  Get latest commit SHA of that branch
+    const refRes = await githubClient.get(
+      `/repos/${owner}/${repo}/git/ref/heads/${branch}`,
+    );
+
+    const commitSha = refRes.data.object.sha;
+    console.log("Commit SHA:", commitSha);
+
+    //  Fetch repo tree using SHA (IMPORTANT)
     const treeRes = await githubClient.get(
-      `/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`
+      `/repos/${owner}/${repo}/git/trees/${commitSha}?recursive=1`,
     );
 
     const tree = treeRes.data.tree || [];
+    console.log("Tree files count:", tree.length);
 
-    // 3️⃣ Select meaningful files only
+    //  Select meaningful files only
     const importantFiles = tree
       .filter(
         (file) =>
           file.type === "blob" &&
-          (
-            file.path.endsWith(".js") ||
+          (file.path.endsWith(".js") ||
             file.path.endsWith(".jsx") ||
             file.path.endsWith(".ts") ||
             file.path.endsWith(".tsx") ||
@@ -86,25 +95,24 @@ export async function parseFiles(owner, repo) {
             file.path.endsWith(".json") ||
             file.path.endsWith(".yml") ||
             file.path.endsWith(".yaml") ||
-            file.path.endsWith("Dockerfile")
-          )
+            file.path.endsWith("Dockerfile")),
       )
       .slice(0, 8); // ⬅ limit AI cost
+      console.log("Important files found:", importantFiles.length);
 
     const codeSnippets = [];
 
     for (const file of importantFiles) {
       try {
         const fileRes = await githubClient.get(
-          `/repos/${owner}/${repo}/contents/${file.path}`
+          `/repos/${owner}/${repo}/contents/${file.path}`,
         );
 
         if (!fileRes.data?.content) continue;
 
-        const decoded = Buffer.from(
-          fileRes.data.content,
-          "base64"
-        ).toString("utf-8");
+        const decoded = Buffer.from(fileRes.data.content, "base64").toString(
+          "utf-8",
+        );
 
         codeSnippets.push({
           path: file.path,

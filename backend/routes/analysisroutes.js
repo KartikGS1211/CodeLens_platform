@@ -8,7 +8,8 @@ import {
     getBestPractices,
     getRepositories,
     getArchitecture, getRedFlags,
-    getSkillSummary
+    getSkillSummary,
+    getFullAnalysis
 } from "../controllers/analysisController.js";
 
 const router = express.Router();
@@ -25,8 +26,9 @@ router.get("/:id/ai-review", getAIReview);
 router.get("/:id/skills-summary", getSkillSummary);
 router.get("/:id/best-practices", getBestPractices);
 router.get("/:id/red-flags", getRedFlags);
+router.get("/:id/full", getFullAnalysis);
 
 // repositories
-router.get("/:id/repositories ", getRepositories);
+router.get("/repositories", getRepositories);
 
 export default router;
