@@ -54,11 +54,21 @@ type QualityDimensions = {
   documentation: number;
 };
 
+type DebtForecast = {
+  currentDebtScore: number;
+  riskLevel: "Low" | "Moderate" | "High";
+  projectedRiskIncrease: number;
+  estimatedRefactorHours: number;
+  maintainabilityDeclineProbability: "Low" | "Medium" | "High";
+  aiInsight: string;
+};
+
 type CodeQualityResponse = {
   qualityTrend: QualityTrendItem[];
   moduleComplexity: ModuleComplexityItem[];
   qualityDimensions: QualityDimensions;
   recentIssues: Issue[];
+  debtForecast?: DebtForecast | null;
 };
 
 // ---------------- HELPERS ----------------
@@ -75,42 +85,43 @@ function severityBadge(level: string) {
   return "bg-emerald-500/10 text-emerald-400";
 }
 
+function getRiskBadge(level: string) {
+  if (level === "High") return "bg-red-500/20 text-red-400";
+  if (level === "Moderate") return "bg-yellow-500/20 text-yellow-400";
+  return "bg-emerald-500/20 text-emerald-400";
+}
+
 function RecentIssues({ issues }: { issues: Issue[] }) {
   if (!issues?.length) return null;
 
   return (
-    <div className="mt-16">
-      <h3 className="text-xl font-semibold text-white mb-6">Recent Issues</h3>
-
-      <div className="space-y-4">
-        {issues.map((issue, i) => (
-          <div
-            key={i}
-            className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-5"
-          >
-            <div className="flex gap-4">
-              <span
-                className={`h-3 w-3 rounded-full mt-2 ${severityDot(
-                  issue.severity,
-                )}`}
-              />
-
-              <div>
-                <p className="text-white font-medium">{issue.title}</p>
-                <p className="text-xs text-foreground/50">{issue.file}</p>
-              </div>
-            </div>
-
+    <div className="space-y-4">
+      {issues.map((issue, i) => (
+        <div
+          key={i}
+          className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-5"
+        >
+          <div className="flex gap-4">
             <span
-              className={`px-3 py-1 rounded-full text-xs font-semibold ${severityBadge(
+              className={`h-3 w-3 rounded-full mt-2 ${severityDot(
                 issue.severity,
               )}`}
-            >
-              {issue.severity}
-            </span>
+            />
+            <div>
+              <p className="text-white font-medium">{issue.title}</p>
+              <p className="text-xs text-foreground/50">{issue.file}</p>
+            </div>
           </div>
-        ))}
-      </div>
+
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${severityBadge(
+              issue.severity,
+            )}`}
+          >
+            {issue.severity}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -134,8 +145,13 @@ export default function CodeQualityPage() {
 
   // ---------------- DATA ----------------
 
-  const { qualityTrend, moduleComplexity, qualityDimensions, recentIssues } =
-    data;
+  const {
+    qualityTrend,
+    moduleComplexity,
+    qualityDimensions,
+    recentIssues,
+    debtForecast,
+  } = data;
 
   if (!qualityTrend || !moduleComplexity || !qualityDimensions) {
     return <div className="p-8 text-red-500">Invalid data format</div>;
@@ -174,7 +190,7 @@ export default function CodeQualityPage() {
     datasets: [
       {
         label: "Quality Trend",
-        data: qualityTrend.map((t) => t.score),
+        data: qualityTrend.map((t) => Number(t.score)),
         borderColor: "#64FFDA",
         backgroundColor: "rgba(100,255,218,0.15)",
         tension: 0.4,
@@ -222,6 +238,92 @@ export default function CodeQualityPage() {
         ))}
       </div>
 
+      {/*  TECHNICAL DEBT FORECAST  */}
+      {debtForecast && (
+        <Card className="p-8 bg-gradient-to-br from-purple-500/5 to-red-500/5 border-purple-500/20 mb-16">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+              🔮 Technical Debt Forecast
+            </h2>
+
+            <span
+              className={`px-4 py-1 rounded-full text-sm font-semibold ${
+                debtForecast.riskLevel === "High"
+                  ? "bg-red-500/20 text-red-400"
+                  : debtForecast.riskLevel === "Moderate"
+                  ? "bg-yellow-500/20 text-yellow-400"
+                  : "bg-emerald-500/20 text-emerald-400"
+              }`}
+            >
+              {debtForecast.riskLevel} Risk
+            </span>
+          </div>
+
+          {/* Debt Score */}
+          <div className="mb-8">
+            <p className="text-sm text-foreground/60 mb-2">
+              Current Debt Score
+            </p>
+            <p className="text-5xl font-bold text-white">
+              {debtForecast.currentDebtScore}{" "}
+              <span className="text-xl">/100</span>
+            </p>
+
+            <div className="w-full bg-white/10 h-3 rounded-full mt-4">
+              <div
+                className={`h-3 rounded-full transition-all duration-500 ${
+                  debtForecast.currentDebtScore > 70
+                    ? "bg-red-500"
+                    : debtForecast.currentDebtScore > 40
+                    ? "bg-yellow-400"
+                    : "bg-emerald-400"
+                }`}
+                style={{ width: `${debtForecast.currentDebtScore}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+              <p className="text-sm text-foreground/60">
+                Risk Growth (Next 3 Months)
+              </p>
+              <p className="text-2xl font-bold text-white mt-2">
+                +{debtForecast.projectedRiskIncrease}%
+              </p>
+            </div>
+
+            <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+              <p className="text-sm text-foreground/60">
+                Estimated Refactor Effort
+              </p>
+              <p className="text-2xl font-bold text-white mt-2">
+                ~{debtForecast.estimatedRefactorHours} hrs
+              </p>
+            </div>
+
+            <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+              <p className="text-sm text-foreground/60">
+                Maintainability Decline Probability
+              </p>
+              <p className="text-2xl font-bold text-white mt-2">
+                {debtForecast.maintainabilityDeclineProbability}
+              </p>
+            </div>
+          </div>
+
+          {/* AI Insight */}
+          <div className="bg-white/5 border border-white/10 p-6 rounded-xl">
+            <p className="text-sm text-foreground/60 mb-3">
+              Why is this happening?
+            </p>
+            <p className="text-white leading-relaxed">
+              {debtForecast.aiInsight}
+            </p>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
         {/* LEFT COLUMN */}
@@ -232,7 +334,18 @@ export default function CodeQualityPage() {
             <div className="h-[300px]">
               <Radar
                 data={radarData}
-                options={{ maintainAspectRatio: false }}
+                options={{
+                  maintainAspectRatio: false,
+                  scales: {
+                    r: {
+                      min: 0,
+                      max: 100,
+                      ticks: {
+                        stepSize: 20,
+                      },
+                    },
+                  },
+                }}
               />
             </div>
           </Card>
@@ -255,7 +368,21 @@ export default function CodeQualityPage() {
           <Card className="p-6 bg-white/5 border-white/10 h-[380px]">
             <h3 className="text-xl text-white mb-4">Quality Trend</h3>
             <div className="h-[300px]">
-              <Line data={trendData} options={{ maintainAspectRatio: false }} />
+              <Line
+                data={trendData}
+                options={{
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      min: 0,
+                      max: 100,
+                      ticks: {
+                        stepSize: 10,
+                      },
+                    },
+                  },
+                }}
+              />
             </div>
           </Card>
 

@@ -22,6 +22,7 @@ export function useCodeQuality(analysisId?: string) {
           qualityTrend,
           moduleComplexity,
           recentIssues,
+          debtForecast,
         } = res.data;
 
         // still processing → keep polling
@@ -33,6 +34,7 @@ export function useCodeQuality(analysisId?: string) {
           qualityTrend,
           moduleComplexity,
           recentIssues,
+          debtForecast,
         });
 
         setLoading(false);

@@ -35,35 +35,54 @@ export default function DeveloperSkillsPage() {
   }
 
   /* ---------------- RADAR ---------------- */
-  const radarData = Object.entries(data?.stackSkills || {}).map(
-    ([key, value]) => ({
+  /* ---------------- RADAR ---------------- */
+  let radarData: any[] = [];
+
+  if (data?.skillRadar?.labels?.length) {
+    // NEW DYNAMIC AI RADAR
+    radarData = data.skillRadar.labels.map((label: string, index: number) => ({
+      skill: label,
+      level: Number(data.skillRadar.values?.[index]) || 0,
+    }));
+  } else {
+    // FALLBACK (OLD STACK SKILLS)
+    radarData = Object.entries(data?.stackSkills || {}).map(([key, value]) => ({
       skill: key.toUpperCase(),
       level: Number(value) || 0,
-    })
-  );
+    }));
+  }
 
   /* ---------------- LANGUAGE ---------------- */
-  const languageData =
-    data?.languageUsage?.length
-      ? data.languageUsage
-      : data?.languages?.map((lang: string, i: number) => ({
-          language: lang,
-          lines: (data.languages.length - i) * 8000,
-        })) || [];
+  const languageData = data?.languageUsage?.length
+    ? data.languageUsage
+    : data?.languages?.map((lang: string, i: number) => ({
+        language: lang,
+        lines: (data.languages.length - i) * 8000,
+      })) || [];
 
   /* ---------------- DETAILED SKILLS ---------------- */
-  const detailedSkills = [
-    { name: "React & Component Design", level: data?.stackSkills?.react ?? 0, category: "Frontend" },
-    { name: "TypeScript & Type Safety", level: data?.stackSkills?.typescript ?? 0, category: "Language" },
-    { name: "API Design & Integration", level: data?.stackSkills?.node ?? 0, category: "Backend" },
-    { name: "Testing & Quality Assurance", level: data?.stackSkills?.testing ?? 0, category: "Quality" },
-    { name: "CI/CD & DevOps", level: data?.stackSkills?.devops ?? 0, category: "DevOps" },
-    { name: "Security Best Practices", level: data?.stackSkills?.security ?? 0, category: "Security" },
-  ];
+  let detailedSkills: any[] = [];
+
+  if (data?.skillRadar?.labels?.length) {
+    detailedSkills = data.skillRadar.labels.map(
+      (label: string, index: number) => ({
+        name: label,
+        level: Number(data.skillRadar.values?.[index]) || 0,
+        category: data.skillRadar.domain || "Core",
+      }),
+    );
+  } else {
+    detailedSkills = Object.entries(data?.stackSkills || {}).map(
+      ([key, value]) => ({
+        name: key.toUpperCase(),
+        level: Number(value) || 0,
+        category: "Core Skill",
+      }),
+    );
+  }
 
   return (
     <div className="w-full max-w-[120rem] mx-auto px-8 py-12">
-
       {/* HEADER */}
       <motion.div
         className="mb-12"
@@ -91,15 +110,27 @@ export default function DeveloperSkillsPage() {
 
       {/* TOP STATS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <StatCard title="Overall Score" value={`${data?.developerProfile?.overallScore}/100`} />
-        <StatCard title="Skills Tracked" value={data?.developerProfile?.skillsTracked} />
+        <StatCard
+          title="Overall Score"
+          value={`${data?.developerProfile?.overallScore}/100`}
+        />
+        <StatCard
+          title="Skills Tracked"
+          value={
+            data?.skillRadar?.labels?.length ||
+            Object.keys(data?.stackSkills || {}).length ||
+            0
+          }
+        />
         <StatCard title="Achievements" value={achievements.length} />
-        <StatCard title="Growth Rate" value={`+${data?.developerProfile?.growthRate}%`} />
+        <StatCard
+          title="Growth Rate"
+          value={`+${data?.developerProfile?.growthRate}%`}
+        />
       </div>
 
       {/* ================= ROW 1 ================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
-
         {/* RADAR */}
         <Card className="border-white/10 bg-white/5 p-6">
           <h3 className="mb-6 text-xl font-semibold text-white">
@@ -110,12 +141,13 @@ export default function DeveloperSkillsPage() {
             <RadarChart outerRadius={120} data={radarData}>
               <PolarGrid stroke="rgba(255,255,255,0.1)" />
               <PolarAngleAxis dataKey="skill" stroke="rgba(255,255,255,0.6)" />
-              <PolarRadiusAxis domain={[0, 100]} />
+              <PolarRadiusAxis domain={[0, 100]} tick={{ fill: "#aaa"}}/>
               <Radar
                 dataKey="level"
                 stroke="#64FFDA"
                 fill="#64FFDA"
                 fillOpacity={0.35}
+                isAnimationActive
               />
             </RadarChart>
           </ResponsiveContainer>
@@ -134,16 +166,29 @@ export default function DeveloperSkillsPage() {
               margin={{ top: 10, right: 20, left: 80, bottom: 10 }}
             >
               <CartesianGrid stroke="rgba(255,255,255,0.1)" />
-              <XAxis type="number" tick={{ fill: "#aaa" }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="language" tick={{ fill: "#aaa" }} axisLine={false} tickLine={false} />
+              <XAxis
+                type="number"
+                tick={{ fill: "#aaa" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                type="category"
+                dataKey="language"
+                tick={{ fill: "#aaa" }}
+                axisLine={false}
+                tickLine={false}
+              />
               <Tooltip
-                contentStyle={{ backgroundColor: "#111", border: "1px solid #333" }}
+                contentStyle={{
+                  backgroundColor: "#111",
+                  border: "1px solid #333",
+                }}
               />
               <Bar dataKey="lines" fill="#BB86FC" />
             </BarChart>
           </ResponsiveContainer>
         </Card>
-
       </div>
 
       {/* DETAILED SKILLS */}
@@ -161,7 +206,9 @@ export default function DeveloperSkillsPage() {
               </div>
 
               <Progress value={skill.level} className="mt-2 h-2 bg-white/10" />
-              <p className="mt-1 text-xs text-foreground/50">{skill.category}</p>
+              <p className="mt-1 text-xs text-foreground/50">
+                {skill.category}
+              </p>
             </div>
           ))}
         </div>
@@ -170,16 +217,23 @@ export default function DeveloperSkillsPage() {
       {/* ACHIEVEMENTS */}
       {achievements.length > 0 && (
         <Card className="mb-16 border-white/10 bg-white/5 p-8">
-          <h3 className="mb-8 text-xl font-semibold text-white">Achievements</h3>
+          <h3 className="mb-8 text-xl font-semibold text-white">
+            Achievements
+          </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {achievements.map((a: any, i: number) => (
-              <div key={i} className="p-6 rounded-xl bg-white/5 border border-white/10">
+              <div
+                key={i}
+                className="p-6 rounded-xl bg-white/5 border border-white/10"
+              >
                 <div className="h-10 w-10 mb-4 flex items-center justify-center rounded-lg bg-neon-teal/10 text-neon-teal">
                   🏆
                 </div>
                 <h4 className="text-white font-semibold">{a.title}</h4>
-                <p className="mt-2 text-sm text-foreground/60">{a.description}</p>
+                <p className="mt-2 text-sm text-foreground/60">
+                  {a.description}
+                </p>
               </div>
             ))}
           </div>
@@ -195,7 +249,10 @@ export default function DeveloperSkillsPage() {
 
           <div className="space-y-4">
             {growth.map((g: any, i: number) => (
-              <div key={i} className="p-5 rounded-lg bg-white/5 border border-white/10">
+              <div
+                key={i}
+                className="p-5 rounded-lg bg-white/5 border border-white/10"
+              >
                 <p className="text-white font-medium">{g.title}</p>
                 <p className="mt-1 text-sm text-foreground/60">{g.action}</p>
               </div>
@@ -203,7 +260,6 @@ export default function DeveloperSkillsPage() {
           </div>
         </Card>
       )}
-
     </div>
   );
 }

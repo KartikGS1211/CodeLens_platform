@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import {
-  BookOpen,
-  FileText,
-  CheckCircle,
-} from "lucide-react";
+import { BookOpen, FileText, CheckCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useParams } from "react-router-dom";
@@ -16,9 +12,10 @@ type PracticeItem = {
   id: string;
   title: string;
   description: string;
+  impact?: "High" | "Medium" | "Low";
+  whyItMatters?: string;
   category: "AI" | "Architecture";
 };
-
 /* -------------------------------- PAGE -------------------------------- */
 
 export default function BestPracticesPage() {
@@ -28,16 +25,22 @@ export default function BestPracticesPage() {
   const { bestPractices, architecture, loading } =
     useBestPracticesAndArchitecture(analysisId);
 
-  const [selectedCategory, setSelectedCategory] = useState<"all" | "AI" | "Architecture">("all");
+  const [selectedCategory, setSelectedCategory] = useState<
+    "all" | "AI" | "Architecture"
+  >("all");
 
   /* ---------------- NORMALIZE DATA ---------------- */
 
-  const aiPractices: PracticeItem[] = bestPractices.map((text, index) => ({
-    id: `ai-${index}`,
-    title: "AI Best Practice",
-    description: text,
-    category: "AI",
-  }));
+  const aiPractices: PracticeItem[] = (bestPractices || []).map(
+    (item: any, index: number) => ({
+      id: `ai-${index}`,
+      title: item.title || "Best Practice",
+      description: item.description || "",
+      impact: item.impact || "Medium",
+      whyItMatters: item.whyItMatters || "",
+      category: "AI",
+    }),
+  );
 
   const architecturePractices: PracticeItem[] = architecture
     ? [
@@ -100,40 +103,101 @@ export default function BestPracticesPage() {
         </p>
       </motion.div>
 
-      {/* ================= ARCHITECTURE OVERVIEW ================= */}
+      {/* ARCHITECTURE INTELLIGENCE  */}
       {architecture && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-16"
         >
-         <Card className="w-full p-8 bg-gradient-to-br from-neon-teal/10 to-transparent border-neon-teal/30">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Architecture Overview
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="w-full p-8 bg-gradient-to-br from-neon-teal/10 to-transparent border-neon-teal/30">
+            {/* HEADER */}
+            <div className="flex justify-between items-center mb-8">
               <div>
-                <p className="text-sm text-foreground/60">Pattern</p>
-                <p className="mt-2 text-xl font-bold text-neon-teal">
+                <h2 className="text-2xl font-bold text-white">
+                  Architecture Intelligence Report
+                </h2>
+                <p className="text-sm text-foreground/60 mt-1">
+                  AI-evaluated architectural maturity & production readiness
+                </p>
+              </div>
+
+              {/* SCORE + RISK */}
+              <div className="text-right">
+                <p className="text-sm text-foreground/60">Maturity Score</p>
+                <p className="text-3xl font-bold text-white">
+                  {architecture.architectureScore ?? 0}/100
+                </p>
+
+                <span
+                  className={`mt-2 inline-block px-4 py-1 rounded-full text-xs font-semibold
+              ${
+                architecture.riskLevel === "Low" &&
+                "bg-emerald-500/10 text-emerald-400"
+              }
+              ${
+                architecture.riskLevel === "Moderate" &&
+                "bg-yellow-500/10 text-yellow-400"
+              }
+              ${
+                architecture.riskLevel === "High" &&
+                "bg-red-500/10 text-red-400"
+              }
+            `}
+                >
+                  {architecture.riskLevel ?? "Unknown"} Risk
+                </span>
+              </div>
+            </div>
+
+            {/* CONFIDENCE */}
+            <p className="text-xs text-foreground/50 mb-10">
+              AI Confidence: {architecture.confidence ?? 75}%
+            </p>
+
+            {/* DETAILS GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* PATTERN */}
+              <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+                <p className="text-sm text-foreground/60">
+                  Architecture Pattern
+                </p>
+                <p className="mt-2 text-lg font-bold text-neon-teal">
                   {architecture.pattern}
                 </p>
+                {architecture.patternReason && (
+                  <p className="mt-3 text-sm text-foreground/70 leading-relaxed">
+                    {architecture.patternReason}
+                  </p>
+                )}
               </div>
 
-              <div>
+              {/* SCALABILITY */}
+              <div className="bg-white/5 p-6 rounded-xl border border-white/10">
                 <p className="text-sm text-foreground/60">Scalability</p>
-                <p className="mt-2 text-xl font-bold text-white">
+                <p className="mt-2 text-lg font-bold text-white">
                   {architecture.scalability}
                 </p>
+                {architecture.scalabilityReason && (
+                  <p className="mt-3 text-sm text-foreground/70 leading-relaxed">
+                    {architecture.scalabilityReason}
+                  </p>
+                )}
               </div>
 
-              <div>
+              {/* SOC */}
+              <div className="bg-white/5 p-6 rounded-xl border border-white/10">
                 <p className="text-sm text-foreground/60">
                   Separation of Concerns
                 </p>
-                <p className="mt-2 text-xl font-bold text-white">
+                <p className="mt-2 text-lg font-bold text-white">
                   {architecture.separationOfConcerns}
                 </p>
+                {architecture.socReason && (
+                  <p className="mt-3 text-sm text-foreground/70 leading-relaxed">
+                    {architecture.socReason}
+                  </p>
+                )}
               </div>
             </div>
           </Card>
@@ -141,16 +205,15 @@ export default function BestPracticesPage() {
       )}
 
       {/* ================= TABS ================= */}
-      <Tabs className="w-full"
+      <Tabs
+        className="w-full"
         defaultValue="all"
         onValueChange={(v) =>
           setSelectedCategory(v as "all" | "AI" | "Architecture")
         }
       >
         <TabsList className="mb-10 bg-white/5 border border-white/10">
-          <TabsTrigger value="all">
-            All ({allPractices.length})
-          </TabsTrigger>
+          <TabsTrigger value="all">All ({allPractices.length})</TabsTrigger>
           <TabsTrigger value="Architecture">
             Architecture ({architecturePractices.length})
           </TabsTrigger>
@@ -168,7 +231,13 @@ export default function BestPracticesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="p-8 bg-white/5 border-white/10 hover:border-neon-teal/30 transition">
+                <Card
+                  className="p-8  bg-white/5 border border-white/10 hover:border-neon-teal/40 hover:shadow-lg 
+                   hover:shadow-neon-teal/10 hover:-translate-y-1transition-all duration-300 rounded-xl
+                    "
+                >
+                {/* LEFT GRADIENT ACCENT LINE */}
+                <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-neon-teal to-transparent rounded-l-xl" />
                   <div className="flex gap-6">
                     <div
                       className={`p-3 rounded-lg ${
@@ -185,9 +254,47 @@ export default function BestPracticesPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-xl font-bold text-white">
-                        {practice.title}
-                      </h3>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-xl font-bold text-white">
+                            {practice.title}
+                          </h3>
+
+                          <span
+                            className={`inline-block mt-2 px-3 py-1 text-xs rounded-full font-semibold
+                            ${
+                              practice.impact === "High" &&
+                              "bg-red-500/10 text-red-400"
+                            }
+                            ${
+                              practice.impact === "Medium" &&
+                              "bg-yellow-500/10 text-yellow-400"
+                            }
+                            ${
+                              practice.impact === "Low" &&
+                              "bg-emerald-500/10 text-emerald-400"
+                            }
+                            `}
+                          >
+                            {practice.impact} Impact
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="mt-4 text-sm text-foreground/70 leading-relaxed">
+                        {practice.description}
+                      </p>
+
+                      {practice.whyItMatters && (
+                        <div className="mt-4 p-4 rounded-lg bg-white/5 border border-white/10">
+                          <p className="text-xs text-foreground/50 uppercase mb-1">
+                            Why It Matters
+                          </p>
+                          <p className="text-sm text-foreground/70">
+                            {practice.whyItMatters}
+                          </p>
+                        </div>
+                      )}
 
                       <span
                         className={`inline-block mt-2 px-3 py-1 text-xs rounded-full ${
@@ -198,10 +305,6 @@ export default function BestPracticesPage() {
                       >
                         {practice.category}
                       </span>
-
-                      <p className="mt-4 text-sm text-foreground/70">
-                        {practice.description}
-                      </p>
                     </div>
                   </div>
                 </Card>
