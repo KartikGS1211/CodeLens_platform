@@ -22,6 +22,25 @@ export function normalizeQuality(aiData) {
       Object.values(qualityDimensions).length
   );
 
+   //  Debt Forecast Normalization
+  const debtForecast = aiData.debtForecast
+    ? {
+        currentDebtScore: Number(aiData.debtForecast.currentDebtScore || 0),
+        riskLevel: aiData.debtForecast.riskLevel || "Unknown",
+        projectedRiskIncrease: Number(
+          aiData.debtForecast.projectedRiskIncrease || 0
+        ),
+        estimatedRefactorHours: Number(
+          aiData.debtForecast.estimatedRefactorHours || 0
+        ),
+        maintainabilityDeclineProbability:
+          aiData.debtForecast.maintainabilityDeclineProbability || "Unknown",
+        aiInsight:
+          aiData.debtForecast.aiInsight ||
+          "AI insight unavailable."
+      }
+    : null;
+
   return {
     qualityTrend: buildTrend(overallScore),
 
@@ -33,6 +52,8 @@ export function normalizeQuality(aiData) {
     ),
 
     qualityDimensions,
-    recentIssues: aiData.recentIssues || []
+    recentIssues: aiData.recentIssues || [],
+
+    debtForecast
   };
 }

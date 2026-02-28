@@ -55,10 +55,22 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
       return;
     }
 
-    /**
-     *  AI Evaluation (AI → fallback guaranteed)
-     */
-    const aiResult = await aiEvaluate(codeFiles);
+    //  SAFE INPUT LIMITER (minimal change)
+    let safeCodeFiles = codeFiles;
+
+    // Rough safety cap (prevents 413)
+    const MAX_FILES = 25; // limit number of files
+    const MAX_FILE_CHARS = 12000; // limit per file size
+
+    safeCodeFiles = codeFiles.slice(0, MAX_FILES).map((file) => ({
+      ...file,
+      content:
+        file.content.length > MAX_FILE_CHARS
+          ? file.content.slice(0, MAX_FILE_CHARS)
+          : file.content,
+    }));
+
+    const aiResult = await aiEvaluate(safeCodeFiles);
 
     if (
       !Array.isArray(aiResult.achievements) ||
@@ -77,16 +89,43 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
 
     // 🔹 Build Code Quality Page data
     const normalizedQuality = normalizeQuality(aiResult);
+    // DEBT FORECAST SAFE HANDLING
+    const safeDebtForecast = aiResult.debtForecast
+      ? {
+          currentDebtScore: Number(aiResult.debtForecast.currentDebtScore ?? 0),
+          riskLevel: aiResult.debtForecast.riskLevel ?? "Unknown",
+          projectedRiskIncrease: Number(
+            aiResult.debtForecast.projectedRiskIncrease ?? 0,
+          ),
+          // estimatedRefactorHours: Number(
+          //   aiResult.debtForecast.estimatedRefactorHours ?? 0,
+          // ),
+          estimatedRefactorHours: Math.min(
+            Number(aiResult.debtForecast.estimatedRefactorHours ?? 0),
+            60, // cap at 60 hours
+          ),
+          maintainabilityDeclineProbability:
+            aiResult.debtForecast.maintainabilityDeclineProbability ??
+            "Unknown",
+          aiInsight:
+            aiResult.debtForecast.aiInsight ?? "AI insight unavailable.",
+        }
+      : null;
 
-    //  Safe stack skills for developer profile
-    const safeStackSkills = {
-      react: Number(aiResult.stackSkills?.react ?? 70),
-      typescript: Number(aiResult.stackSkills?.typescript ?? 70),
-      node: Number(aiResult.stackSkills?.node ?? 70),
-      testing: Number(aiResult.stackSkills?.testing ?? 65),
-      devops: Number(aiResult.stackSkills?.devops ?? 60),
-      security: Number(aiResult.stackSkills?.security ?? 65),
-    };
+    console.log(" Debt Forecast:", safeDebtForecast);
+
+    //  Dynamic Skill Radar Safe Handling (NEW)
+    const safeSkillRadar = aiResult.skillRadar
+      ? {
+          domain: aiResult.skillRadar.domain ?? "General",
+          labels: Array.isArray(aiResult.skillRadar.labels)
+            ? aiResult.skillRadar.labels
+            : [],
+          values: Array.isArray(aiResult.skillRadar.values)
+            ? aiResult.skillRadar.values.map((v) => Number(v))
+            : [],
+        }
+      : null;
 
     const isFallback = aiResult.__source === "fallback";
 
@@ -137,10 +176,16 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
     }));
 
     const safeArchitecture = {
-      pattern: aiResult.architecture?.pattern ?? "Not specified",
-      scalability: aiResult.architecture?.scalability ?? "Not specified",
+      pattern: aiResult.architecture?.pattern ?? "Unknown",
+      patternReason: aiResult.architecture?.patternReason ?? "",
+      scalability: aiResult.architecture?.scalability ?? "Unknown",
+      scalabilityReason: aiResult.architecture?.scalabilityReason ?? "",
       separationOfConcerns:
-        aiResult.architecture?.separationOfConcerns ?? "Not specified",
+        aiResult.architecture?.separationOfConcerns ?? "Unknown",
+      socReason: aiResult.architecture?.socReason ?? "",
+      architectureScore: Number(aiResult.architecture?.architectureScore ?? 70),
+      riskLevel: aiResult.architecture?.riskLevel ?? "Moderate",
+      confidence: Number(aiResult.architecture?.confidence ?? 75),
     };
 
     const safeReview = {
@@ -168,11 +213,9 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
       : [];
 
     const safeAchievements = aiResult.achievements;
-     
 
-    const safeGrowthRecommendations =aiResult.growthRecommendations;
-    
-     
+    const safeGrowthRecommendations = aiResult.growthRecommendations;
+
     /**
      * Improve Skill Summary
      */
@@ -230,7 +273,7 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
         files: repoData.files || 0,
 
         architecture: safeArchitecture,
-        stackSkills: safeStackSkills,
+        skillRadar: safeSkillRadar,
         developerProfile: safeDeveloperProfile,
         achievements: safeAchievements,
         growthRecommendations: safeGrowthRecommendations,
@@ -239,12 +282,11 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
         bestPractices: safeBestPractices,
         redFlags: safeRedFlags,
 
-        recentIssues: safeRecentIssues,
-
         qualityDimensions: normalizedQuality.qualityDimensions,
-        qualityTrend: normalizedQuality.qualityTrend,
+        qualityTrend: qualityTrend,
         moduleComplexity: normalizedQuality.moduleComplexity,
         recentIssues: normalizedQuality.recentIssues,
+        debtForecast: safeDebtForecast,
 
         skillSummary: finalSkillSummary,
         overallVerdict:

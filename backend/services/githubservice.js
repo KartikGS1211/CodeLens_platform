@@ -82,20 +82,35 @@ export async function parseFiles(owner, repo) {
       .filter(
         (file) =>
           file.type === "blob" &&
-          (file.path.endsWith(".js") ||
-            file.path.endsWith(".jsx") ||
-            file.path.endsWith(".ts") ||
-            file.path.endsWith(".tsx") ||
-            file.path.endsWith(".py") ||
-            file.path.endsWith(".java") ||
-            file.path.endsWith(".go") ||
-            file.path.endsWith(".cs") ||
-            file.path.endsWith(".cpp") ||
-            file.path.endsWith(".c") ||
-            file.path.endsWith(".json") ||
-            file.path.endsWith(".yml") ||
-            file.path.endsWith(".yaml") ||
-            file.path.endsWith("Dockerfile")),
+          (
+            //  Frontend 
+      file.path.endsWith(".js") ||
+      file.path.endsWith(".jsx") ||
+      file.path.endsWith(".ts") ||
+      file.path.endsWith(".tsx") ||
+      file.path.endsWith(".html") ||
+      file.path.endsWith(".htm") ||
+      file.path.endsWith(".css") ||
+      file.path.endsWith(".scss") ||
+      file.path.endsWith(".sass") ||
+      file.path.endsWith(".less") ||
+      file.path.endsWith(".vue") ||
+      file.path.endsWith(".svelte") ||
+
+      //  Backend 
+      file.path.endsWith(".py") ||
+      file.path.endsWith(".java") ||
+      file.path.endsWith(".go") ||
+      file.path.endsWith(".cs") ||
+      file.path.endsWith(".cpp") ||
+      file.path.endsWith(".c") ||
+      file.path.endsWith(".php") ||
+      file.path.endsWith(".rb") ||
+      file.path.endsWith(".rs") ||
+      file.path.endsWith(".kt") ||
+      file.path.endsWith(".swift") ||
+      file.path.endsWith(".scala")
+          )
       )
       .slice(0, 8); // ⬅ limit AI cost
       console.log("Important files found:", importantFiles.length);

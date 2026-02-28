@@ -59,6 +59,7 @@ export async function startAnalysis(req, res) {
           qualityTrend: null,
           moduleComplexity: null,
           recentIssues: null,
+          debtForecast: null,
 
           // existing
           architecture: null,
@@ -142,6 +143,7 @@ export async function getCodeQuality(req, res) {
         qualityTrend: true,
         moduleComplexity: true,
         recentIssues: true,
+        debtForecast: true,
         status: true,
       },
     });
@@ -163,6 +165,7 @@ export async function getCodeQuality(req, res) {
       qualityTrend: analysis.qualityTrend,
       moduleComplexity: analysis.moduleComplexity,
       recentIssues: analysis.recentIssues || [],
+      debtForecast: analysis.debtForecast || null,
     });
   } catch (err) {
     console.error(" getCodeQuality failed:", err);
