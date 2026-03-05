@@ -9,6 +9,7 @@ import sourceAttrsPlugin from "@wix/babel-plugin-jsx-source-attrs";
 import dynamicDataPlugin from "@wix/babel-plugin-jsx-dynamic-data";
 import customErrorOverlayPlugin from "./vite-error-overlay-plugin.js";
 import path from "path"; 
+import node from "@astrojs/node";
 
 import { fileURLToPath } from "url"; 
 
@@ -69,7 +70,9 @@ export default defineConfig({
     plugins: [customErrorOverlayPlugin()],
   },
 
-  adapter: isBuild ? cloudProviderFetchAdapter({}) : undefined,
+  adapter: node({
+    mode: "standalone",
+  }),
 
   devToolbar: {
     enabled: false,
