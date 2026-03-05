@@ -13,6 +13,7 @@ import AnalysisOverviewPage from "./pages/AnalysisOverviewPage";
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useEffect, useState } from "react";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
  const [router, setRouter] = useState<any>(null);
@@ -29,7 +30,10 @@ export default function AppRouter() {
       },
       {
         path: "/profile",
-        element: <ProfilePage />,
+        element: 
+        <ProtectedRoute>
+          <ProfilePage />
+        </ProtectedRoute>,
       },
     ],
   },
@@ -37,7 +41,11 @@ export default function AppRouter() {
   // ANALYSIS ROUTES (WITH SIDEBAR)
   {
     path: "/analysis/:analysisId",
-    element: <AppLayout />,
+    element: (
+    <ProtectedRoute>
+      <AppLayout />
+    </ProtectedRoute>
+    ),
     children: [
       {
         index: true,

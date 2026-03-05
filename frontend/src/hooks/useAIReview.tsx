@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import apiClient from "@/lib/apiClient";
 
 type AIReviewData = {
+  issues: any[]; //  important fix
   review: {
+    summary?: string;
     strengths: string[];
     weaknesses: string[];
     suggestions: string[];
@@ -26,10 +28,17 @@ export function useAIReview(analysisId?: string) {
           `/analysis/${analysisId}/ai-review`
         );
 
-        const { status, review, redFlags } = res.data;
+        const {
+          status,
+          review,
+          redFlags,
+          issues, // 🔥 FIXED
+        } = res.data;
 
         setData({
+          issues: issues ?? [], //  now frontend gets issues
           review: {
+            summary: review?.summary ?? "",
             strengths: review?.strengths ?? [],
             weaknesses: review?.weaknesses ?? [],
             suggestions: review?.suggestions ?? [],
@@ -38,24 +47,17 @@ export function useAIReview(analysisId?: string) {
           status: status ?? "processing",
         });
 
-        // ✅ stop polling only when finished
-        if (
-          status === "completed" ||
-          status === "failed"
-        ) {
+        if (status === "completed" || status === "failed") {
           clearInterval(interval);
           setLoading(false);
         }
       } catch (err) {
-        console.error("❌ Failed to fetch AI review", err);
+        console.error(" Failed to fetch AI review", err);
         setLoading(false);
       }
     }
 
-    // first fetch
     fetchAIReview();
-
-    // poll while processing
     interval = setInterval(fetchAIReview, 4000);
 
     return () => clearInterval(interval);

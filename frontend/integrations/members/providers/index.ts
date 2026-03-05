@@ -1,2 +1,3 @@
-export * from './MemberContext';
-export * from './MemberProvider';
+export { MemberProvider } from "./MemberProvider";
+export { useMember } from "./MemberProvider";
+export { MemberContext } from "./MemberContext";

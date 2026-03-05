@@ -25,6 +25,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import AnimatedHeroGlow from "../ui/AnimatedHeroGlow";
 import { Repository } from "../../types/repository";
+import { useMember } from "../../../integrations/members/providers/MemberProvider";
+
 
 /* ---------- TYPES ---------- */
 type StatItem = {
@@ -44,6 +46,8 @@ const GridBackground = () => (
 
 /* ---------- MAIN ---------- */
 export default function HomePage() {
+  const { member } = useMember();
+
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
@@ -51,19 +55,39 @@ export default function HomePage() {
 
   const navigate = useNavigate();
 
+  //  ADD THIS FUNCTION HERE
+  function requireLogin(action: () => void) {
+    if (!member) {
+      alert("Please login first to continue");
+      return;
+    }
+
+    action();
+  }
+
   /* ---------- DATA LOAD ---------- */
   useEffect(() => {
+
+    if (!member) return;
+
     loadRepositories();
+
     const interval = setInterval(() => loadRepositories(true), 5000);
+
     return () => clearInterval(interval);
-  }, []);
+
+  }, [member]);
 
   const loadRepositories = async (silent = false) => {
     try {
+      if (!member) return;
+
       if (!silent) setLoading(true);
 
-      const data = await getRepositories();
+      const data = await getRepositories(member._id);
+
       setRepositories(data);
+
     } catch (err) {
       console.error("Failed to load repositories", err);
     } finally {
@@ -76,9 +100,10 @@ export default function HomePage() {
     try {
       setStartingAnalysis(true);
 
-      const res = await axios.post(
-        "http://localhost:5000/api/analysis/start", {
+      const res = await axios.post("http://localhost:5000/api/analysis/start", {
         repoUrl,
+        userId: member?._id,
+        userEmail: member?.loginEmail
       });
 
       const analysisId = res.data.analysisId;
@@ -97,7 +122,9 @@ export default function HomePage() {
   /* ---------- SCROLL ---------- */
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
-     stiffness: 100, damping: 30 });
+    stiffness: 100,
+    damping: 30,
+  });
 
   function getStatusColor(status: string) {
     switch (status) {
@@ -142,14 +169,14 @@ export default function HomePage() {
 
               <div className="flex flex-wrap gap-4">
                 <button
-                  onClick={() => setOpenModal(true)}
+                  onClick={() => requireLogin(() => setOpenModal(true))}
                   className="px-8 py-4 bg-neon-teal text-black font-bold rounded-lg hover:bg-neon-teal/90 transition"
                 >
                   Initialize Analysis
                 </button>
 
                 <button
-                  onClick={() => setOpenModal(true)}
+                  onClick={() => requireLogin(() => setOpenModal(true))}
                   className="px-8 py-4 border border-white/20 rounded-lg hover:bg-white/5 transition"
                 >
                   Add Repository
@@ -174,8 +201,7 @@ export default function HomePage() {
 
         {/* REPOSITORIES */}
         <section className="px-10 md:px-16 lg:px-24 pb-32">
-          <h2 className="text-3xl font-bold mb-10">
-            Your Repositories</h2>
+          <h2 className="text-3xl font-bold mb-10">Your Repositories</h2>
           {loading ? (
             <div className="h-96 flex items-center justify-center">
               <div className="w-12 h-12 border-4 border-neon-teal border-t-transparent rounded-full animate-spin" />
@@ -187,6 +213,10 @@ export default function HomePage() {
                   key={repo.id}
                   className="cursor-pointer border-white/10 bg-[#111] hover:border-neon-teal/50 transition-all duration-300 overflow-hidden"
                   onClick={() => {
+                    if (!member) {
+                      alert("Please login to view analysis");
+                      return;
+                    }
                     if (!repo.analysis?.id) {
                       alert("Analysis not ready yet");
                       return;
@@ -201,15 +231,13 @@ export default function HomePage() {
                   <div className="p-6 border-b border-white/5 bg-white/[0.02]">
                     <div className="flex justify-between mb-4">
                       <GitBranch className="text-neon-teal" />
-                      
+
                       <span
                         className={`text-xs px-2 py-1 border rounded ${getStatusColor(
-                          repo.analysis?.status || repo.status
-
+                          repo.analysis?.status || repo.status,
                         )}`}
                       >
                         {repo.analysis?.status || repo.status}
-
                       </span>
                     </div>
 
@@ -221,10 +249,9 @@ export default function HomePage() {
                   </div>
 
                   <div className="p-6 text-sm text-white/60">
-                    {repo.analysis?.status === "completed" 
+                    {repo.analysis?.status === "completed"
                       ? "Click to view analysis results"
-                      : "Analysis not completed"
-                    }
+                      : "Analysis not completed"}
                   </div>
                 </Card>
               ))}

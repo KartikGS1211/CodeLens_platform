@@ -1,11 +1,8 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Calendar, LogOut, Edit2 } from 'lucide-react';
 import { useMember } from '../../../integrations';
 import { MemberProtectedRoute } from '../ui/member-protected-route';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
 import { Card } from '@/components/ui/card';
 import { Image } from '@/components/ui/image';
 
@@ -241,6 +238,6 @@ export default function ProfilePage() {
   return (
     <MemberProtectedRoute messageToSignIn="Sign in to access your profile">
       <ProfilePageContent />
-    </MemberProtectedRoute>
+    // </MemberProtectedRoute>
   );
 }

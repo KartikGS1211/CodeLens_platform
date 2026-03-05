@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, ReactNode } from 'react';
-import { MemberActions, MemberContext, MemberState } from '.';
-import { getCurrentMember, Member } from '..';
+import { MemberActions, MemberContext as MemberContextType, MemberState } from './MemberContext';
+import { getCurrentMember, Member } from '../index';
 
 // Local storage key
 const MEMBER_STORAGE_KEY = 'member-store';
@@ -208,4 +208,17 @@ function reloadOnceLoggedIn(loginWindow: Window) {
   }
 
   setTimeout(() => reloadOnceLoggedIn(loginWindow), 1_000);
+}
+
+/* ---------------- ADD THIS ---------------- */
+
+import { useContext } from "react";
+import { MemberContext } from "./MemberContext";
+
+export function useMember() {
+  const context = useContext(MemberContext);
+  if (context === undefined) {
+    throw new Error('useMember must be used within a MemberProvider');
+  }
+  return context;
 }

@@ -1,6 +1,7 @@
 import { members } from "@wix/members";
 
 export type Member = {
+  _id: any;
   loginEmail?: members.GetMyMemberResponse['member']['loginEmail']; // type is string
   loginEmailVerified?: members.GetMyMemberResponse['member']['loginEmailVerified']; // type is boolean
   status?: members.GetMyMemberResponse['member']['status']; // type is enum of "UNKNOWN" | "PENDING" | "APPROVED" | "BLOCKED" | "OFFLINE"
