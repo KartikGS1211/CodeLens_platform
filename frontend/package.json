@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "npx wix dev",
     "build": "wix build",
-    "preview": "wix preview",
+    "preview": "astro preview",
     "release": "wix release",
     "env": "wix env pull",
     "check": "npx astro check --js-only",
