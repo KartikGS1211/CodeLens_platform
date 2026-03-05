@@ -37,6 +37,7 @@ Traditional tools provide rule-based linting but lack contextual reasoning.
  # Solution
 
 CodeLens AI uses LLM-based analysis to generate multi-dimensional engineering insights with reasoning-based evaluations instead of simple rule checks.
+
 ---
 
 # 🔹 2. Recruiters Cannot Accurately Measure Developer Skill
@@ -48,6 +49,7 @@ Hiring decisions are often based on:
 - Self-reported resumes
 - Interviews that may not reflect real code ability
 - Unstructured GitHub links
+  
 
 #  Solution
 
@@ -179,6 +181,7 @@ CodeLens AI automatically detects architectural patterns such as:
 -Service-based architecture
 
 # It evaluates:
+
 -Separation of concerns
 -Scalability readiness
 -System modularity
@@ -203,6 +206,7 @@ This helps teams understand future engineering risks early.
 CodeLens AI supports multi-user repository tracking.
 
 # Features include:
+
 -Wix authentication integration
 -User-specific repository history
 -Per-user repository analysis dashboards
