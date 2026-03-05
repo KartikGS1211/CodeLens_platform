@@ -2,94 +2,107 @@
 
 ### AI-Powered Developer Intelligence & Engineering Risk Analysis Platform
 
-CodeLens AI is a full-stack AI-driven platform that analyzes GitHub repositories and transforms raw source code into structured engineering intelligence.
+CodeLens AI is a full-stack AI engineering intelligence platform that analyzes GitHub repositories and converts raw source code into structured developer insights.
 
-Unlike traditional static analyzers, CodeLens AI uses Large Language Models (LLMs) to generate contextual, reasoning-based insights across multiple dimensions such as security, maintainability, performance, reliability, architecture, and developer skill profiling.
+Unlike traditional static analysis tools, CodeLens AI uses Large Language Models (LLMs) to perform contextual reasoning across codebases, generating structured insights about architecture, security risks, code quality, and developer skill profiles.
 
-It bridges the gap between code quality analysis, developer evaluation, and engineering risk management.
+The platform bridges the gap between:
+
+- Code Quality Analysis
+
+- Engineering Risk Intelligence
+
+- Developer Skill Profiling
+
+- AI-Driven Code Review
 
 ---
 
-# Real-World Problem It Solves
+## Real-World Problem It Solves
 
 Modern software development faces critical challenges:
 
-## 🔹 1. Lack of Objective Code Quality Visibility
+# 🔹 1. Lack of Engineering Visibility
 
-Many developers focus primarily on functionality ("it works") while overlooking:
+Most projects lack a clear understanding of:
 
-- Security best practices
-- Maintainability
-- Testing coverage
-- Architectural consistency
-- Performance optimization
+- Security risks
+- Architectural design quality
+- Code maintainability
+- Technical debt accumulation
+- System scalability
 
-###  Solution
+Traditional tools provide rule-based linting but lack contextual reasoning.
 
-CodeLens AI provides AI-generated, multi-dimensional code evaluation, offering structured quality metrics instead of subjective assumptions.
+ # Solution
+
+CodeLens AI uses LLM-based analysis to generate multi-dimensional engineering insights with reasoning-based evaluations instead of simple rule checks.
 
 ---
 
-## 🔹 2. Recruiters Cannot Accurately Measure Developer Skill
+# 🔹 2. Recruiters Cannot Accurately Measure Developer Skill
 
 Resumes do not reflect real coding ability.
 
 Hiring decisions are often based on:
 
-- Self-reported skills
-- Interviews
+- Self-reported resumes
+- Interviews that may not reflect real code ability
 - Unstructured GitHub links
+  
 
-###  Solution
+#  Solution
 
 CodeLens AI transforms repositories into measurable developer intelligence through:
 
-- AI-based skill radar graphs
+- AI-based skill radar charts
 - Quality scoring across dimensions
 - Strength and weakness detection
 - Role alignment insights
+- Skill gap detection
 
-This enables data-driven talent evaluation.
+This allows data-driven developer evaluation.
 
 ---
 
-## 🔹 3. Small Teams Lack Intelligent Code Review Infrastructure
+# 🔹 3. Small Teams Lack Advanced Code Review Infrastructure
 
-Enterprise tools are often:
+Enterprise tools for code quality and architecture analysis are often:
 
 - Expensive
-- Rule-based
+- Limited to rule-based validation
 - Complex to integrate
 
-### Solution
+# Solution
 
 CodeLens AI provides:
 
 - AI-powered contextual code review
-- Architecture detection
-- Risk and technical debt insights
-- Best practice compliance analysis
-- Engineering intelligence dashboards
+- Security risk detection
+- Architecture pattern evaluation
+- Technical debt forecasting
 
 ---
 
 #  Core Features
 
-##  Repository Overview Dashboard
+#  1.  AI Repository Overview Dashboard
+Provides a high-level snapshot of repository health.
 
+# Features include:
 - Repository metadata (commits, files, languages)
 - Repository health indicators
 - AI-generated executive summary
 - High-level engineering intelligence snapshot
-- Risk overview flags
+- Risk indicators flags
 
 Provides an instant understanding of repository condition.
 
 ---
 
-##  AI-Powered Code Quality Analysis
+# 2.  AI-Powered Code Quality Analysis
 
-Multi-dimensional scoring across:
+Analyzes code across multiple engineering dimensions:
 
 - Security
 - Maintainability
@@ -98,7 +111,7 @@ Multi-dimensional scoring across:
 - Documentation
 - Testing
 
-Includes:
+# Includes:
 
 - Radar chart visualization
 - Quality trend analysis
@@ -110,32 +123,45 @@ All metrics are dynamically generated using LLM-based contextual reasoning — n
 
 ---
 
-##  AI Code Review Engine
+# 3.  AI Code Review Engine
 
-- Identifies red flags and vulnerabilities
-- Highlights strengths
-- Generates improvement suggestions
-- Provides contextual reasoning
-- Structured issue categorization (Critical / High / Medium / Low)
+CodeLens AI performs intelligent code review by detecting:
 
+-Critical engineering risks
+-Security vulnerabilities
+-Maintainability problems
+-Performance bottlenecks
+-Architectural inconsistencies
+
+# Each issue includes:
+-File path and line reference
+-Severity level
+-AI explanation
+-Suggested fix
+-Confidence score
+-Impact score
+
+Issues are stored in a structured database for tracking.
 Acts as an intelligent AI reviewer rather than a simple linting system.
 
 ---
 
-##  Developer Skill Profiling
+# 4. Developer Skill Profiling
 
-- AI-generated skill summary
-- Radar-based visualization
-- Language proficiency analysis
-- Growth tracking insights
-- Role alignment suggestions
-- Skill gap detection
+The system analyzes repositories to generate developer intelligence.
 
-Transforms repositories into measurable developer intelligence profiles.
+# Features include 
+- AI skill radar charts
+-Language proficiency analysis
+-Strength & weakness detection
+-Developer growth insights
+-Role alignment suggestions
+
+This transforms raw repositories into developer capability profiles.
 
 ---
 
-## Architecture & Best Practices Evaluation
+# 5. Architecture & Best Practices Evaluation
 
 - Architecture pattern detection (e.g., MVC)
 - Separation of concerns validation
@@ -147,29 +173,89 @@ Ensures evaluation at both file-level and system-level.
 
 ---
 
+# 6.  Architecture Intelligence
+
+CodeLens AI automatically detects architectural patterns such as:
+-MVC
+-Layered architecture
+-Service-based architecture
+
+# It evaluates:
+
+-Separation of concerns
+-Scalability readiness
+-System modularity
+-Engineering best-practice compliance
+
+---
+
+# 7. Technical Debt Forecasting
+
+The platform estimates long-term engineering risk through:
+-Technical debt score
+-Risk escalation prediction
+-Maintainability decline probability
+-Estimated refactor effort
+
+This helps teams understand future engineering risks early.
+
+---
+
+# 8.  Multi-User Repository Intelligence
+
+CodeLens AI supports multi-user repository tracking.
+
+# Features include:
+
+-Wix authentication integration
+-User-specific repository history
+-Per-user repository analysis dashboards
+-Isolated analysis results for each developer
+
+This enables personalized engineering insights.
+
+---
+
 #  How It Works
 
-1. Repository data is fetched from GitHub.
-2. Source files and project structure are processed.
-3. Large Language Model (Groq + Llama) performs contextual evaluation.
-4. AI output is normalized into structured JSON metrics.
-5. Results are visualized in interactive dashboards.
-
-The system converts unstructured AI responses into production-ready analytics data for real-time visualization.
+1. A user connects a GitHub repository.
+2. The backend fetches repository metadata and source files.
+3. Code snippets are processed and sent to the AI evaluation pipeline.
+4. Groq LLM performs contextual reasoning across the codebase.
+5. AI output is normalized into structured JSON analytics.
+6. Results are stored in PostgreSQL using Prisma ORM.
+7. Dashboards visualize the engineering insights..
 
 ---
 
 #  System Architecture
 
-Frontend → Backend API → AI Processing Layer → Database → Structured Analytics → Dashboard Visualization
+Frontend (React + TypeScript)
+        │
+        ▼
+Backend API (Node.js + Express)
+        │
+        ▼
+AI Processing Pipeline
+(Groq LLM + Prompt Engine)
+        │
+        ▼
+Data Normalization Layer
+        │
+        ▼
+PostgreSQL Database (Neon + Prisma)
+        │
+        ▼
+Analytics Dashboard Visualization
 
-The architecture is modular, scalable, and designed for production extensibility.
+The architecture is modular and designed for scalability.
 
 ---
 
-#  Tech Stack
 
-## Frontend
+##  Tech Stack
+
+# Frontend
 
 - React
 - TypeScript
@@ -178,41 +264,46 @@ The architecture is modular, scalable, and designed for production extensibility
 - Recharts / Chart.js
 - React Router
 
-## Backend
+# Backend
 
 - Node.js
 - Express.js
 - Prisma ORM
 - PostgreSQL (Neon)
 
-## AI Layer
+# AI Layer
 
 - Groq LLM
 - Llama Model
 - Structured Prompt Engineering Pipeline
 - AI Output Normalization Engine
 
+# Authentication
+
+- Wix Members SDK
+- Session-based authentication
+
 ---
 
-#  What Makes CodeLens AI Stand Out
+#  What Makes CodeLens AI Unique
 
-- Uses real AI-generated contextual analysis (not dummy/static data)
+- AI-driven contextual code analysis
 - Converts LLM responses into structured engineering metrics
-- Bridges code quality and developer skill intelligence
-- Provides reasoning-backed scoring instead of rule-only validation
-- Designed as a full-stack scalable engineering system
-- Demonstrates applied AI engineering and system design thinking
+- Bridges code quality analysis with developer skill intelligence
+- Provides reasoning-based insights rather than simple lint rules
+- Multi-user repository intelligence platform
+- Production-style AI pipeline architecture
 
 ---
 
 #  Future Enhancements
 
 - GitHub webhook auto-analysis
-- AI-powered pull request review bot
-- Technical debt forecasting engine
-- Team-level analytics dashboard
-- CI/CD integration
-- Enterprise-grade role-based access control
+- AI pull request review bot
+- Team-level engineering analytics
+- CI/CD pipeline integration
+- AI security vulnerability scanner
+- Enterprise-grade role-based across control
 
 ---
 
