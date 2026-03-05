@@ -86,7 +86,7 @@ CodeLens AI provides:
 
 #  Core Features
 
-#  AI Repository Overview Dashboard
+#  1.  AI Repository Overview Dashboard
 Provides a high-level snapshot of repository health.
 
 # Features include:
@@ -100,7 +100,7 @@ Provides an instant understanding of repository condition.
 
 ---
 
-#  AI-Powered Code Quality Analysis
+# 2.  AI-Powered Code Quality Analysis
 
 Analyzes code across multiple engineering dimensions:
 
@@ -123,7 +123,7 @@ All metrics are dynamically generated using LLM-based contextual reasoning — n
 
 ---
 
-#  AI Code Review Engine
+# 3.  AI Code Review Engine
 
 CodeLens AI performs intelligent code review by detecting:
 
@@ -146,7 +146,7 @@ Acts as an intelligent AI reviewer rather than a simple linting system.
 
 ---
 
-#  Developer Skill Profiling
+# 4. Developer Skill Profiling
 
 The system analyzes repositories to generate developer intelligence.
 
@@ -161,7 +161,7 @@ This transforms raw repositories into developer capability profiles.
 
 ---
 
-# Architecture & Best Practices Evaluation
+# 5. Architecture & Best Practices Evaluation
 
 - Architecture pattern detection (e.g., MVC)
 - Separation of concerns validation
@@ -173,7 +173,7 @@ Ensures evaluation at both file-level and system-level.
 
 ---
 
-# Architecture Intelligence
+# 6.  Architecture Intelligence
 
 CodeLens AI automatically detects architectural patterns such as:
 -MVC
@@ -189,7 +189,7 @@ CodeLens AI automatically detects architectural patterns such as:
 
 ---
 
-# Technical Debt Forecasting
+# 7. Technical Debt Forecasting
 
 The platform estimates long-term engineering risk through:
 -Technical debt score
@@ -201,7 +201,7 @@ This helps teams understand future engineering risks early.
 
 ---
 
-# Multi-User Repository Intelligence
+# 8.  Multi-User Repository Intelligence
 
 CodeLens AI supports multi-user repository tracking.
 
@@ -253,7 +253,7 @@ The architecture is modular and designed for scalability.
 ---
 
 
-#  Tech Stack
+##  Tech Stack
 
 # Frontend
 
