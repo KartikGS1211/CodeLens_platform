@@ -10,6 +10,7 @@ import dynamicDataPlugin from "@wix/babel-plugin-jsx-dynamic-data";
 import customErrorOverlayPlugin from "./vite-error-overlay-plugin.js";
 import path from "path"; 
 import node from "@astrojs/node";
+import 'dotenv/config';
 
 import { fileURLToPath } from "url"; 
 
