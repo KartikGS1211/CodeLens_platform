@@ -18,11 +18,11 @@ The platform bridges the gap between:
 
 ---
 
-# Real-World Problem It Solves
+## Real-World Problem It Solves
 
 Modern software development faces critical challenges:
 
-## 🔹 1. Lack of Engineering Visibility
+# 🔹 1. Lack of Engineering Visibility
 
 Most projects lack a clear understanding of:
 
@@ -34,12 +34,12 @@ Most projects lack a clear understanding of:
 
 Traditional tools provide rule-based linting but lack contextual reasoning.
 
- ### Solution
+ # Solution
 
 CodeLens AI uses LLM-based analysis to generate multi-dimensional engineering insights with reasoning-based evaluations instead of simple rule checks.
 ---
 
-## 🔹 2. Recruiters Cannot Accurately Measure Developer Skill
+# 🔹 2. Recruiters Cannot Accurately Measure Developer Skill
 
 Resumes do not reflect real coding ability.
 
@@ -49,7 +49,7 @@ Hiring decisions are often based on:
 - Interviews that may not reflect real code ability
 - Unstructured GitHub links
 
-###  Solution
+#  Solution
 
 CodeLens AI transforms repositories into measurable developer intelligence through:
 
@@ -63,7 +63,7 @@ This allows data-driven developer evaluation.
 
 ---
 
-## 🔹 3. Small Teams Lack Advanced Code Review Infrastructure
+# 🔹 3. Small Teams Lack Advanced Code Review Infrastructure
 
 Enterprise tools for code quality and architecture analysis are often:
 
@@ -71,7 +71,7 @@ Enterprise tools for code quality and architecture analysis are often:
 - Limited to rule-based validation
 - Complex to integrate
 
-### Solution
+# Solution
 
 CodeLens AI provides:
 
@@ -84,7 +84,7 @@ CodeLens AI provides:
 
 #  Core Features
 
-##  AI Repository Overview Dashboard
+#  AI Repository Overview Dashboard
 Provides a high-level snapshot of repository health.
 
 # Features include:
@@ -98,7 +98,7 @@ Provides an instant understanding of repository condition.
 
 ---
 
-##  AI-Powered Code Quality Analysis
+#  AI-Powered Code Quality Analysis
 
 Analyzes code across multiple engineering dimensions:
 
@@ -121,7 +121,7 @@ All metrics are dynamically generated using LLM-based contextual reasoning — n
 
 ---
 
-##  AI Code Review Engine
+#  AI Code Review Engine
 
 CodeLens AI performs intelligent code review by detecting:
 
@@ -144,7 +144,7 @@ Acts as an intelligent AI reviewer rather than a simple linting system.
 
 ---
 
-##  Developer Skill Profiling
+#  Developer Skill Profiling
 
 The system analyzes repositories to generate developer intelligence.
 
@@ -159,7 +159,7 @@ This transforms raw repositories into developer capability profiles.
 
 ---
 
-## Architecture & Best Practices Evaluation
+# Architecture & Best Practices Evaluation
 
 - Architecture pattern detection (e.g., MVC)
 - Separation of concerns validation
@@ -171,7 +171,7 @@ Ensures evaluation at both file-level and system-level.
 
 ---
 
-## Architecture Intelligence
+# Architecture Intelligence
 
 CodeLens AI automatically detects architectural patterns such as:
 -MVC
@@ -186,7 +186,7 @@ CodeLens AI automatically detects architectural patterns such as:
 
 ---
 
-## Technical Debt Forecasting
+# Technical Debt Forecasting
 
 The platform estimates long-term engineering risk through:
 -Technical debt score
@@ -198,7 +198,7 @@ This helps teams understand future engineering risks early.
 
 ---
 
-## Multi-User Repository Intelligence
+# Multi-User Repository Intelligence
 
 CodeLens AI supports multi-user repository tracking.
 
@@ -251,7 +251,7 @@ The architecture is modular and designed for scalability.
 
 #  Tech Stack
 
-## Frontend
+# Frontend
 
 - React
 - TypeScript
@@ -260,28 +260,28 @@ The architecture is modular and designed for scalability.
 - Recharts / Chart.js
 - React Router
 
-## Backend
+# Backend
 
 - Node.js
 - Express.js
 - Prisma ORM
 - PostgreSQL (Neon)
 
-## AI Layer
+# AI Layer
 
 - Groq LLM
 - Llama Model
 - Structured Prompt Engineering Pipeline
 - AI Output Normalization Engine
 
-## Authentication
+# Authentication
 
 - Wix Members SDK
 - Session-based authentication
 
 ---
 
-##  What Makes CodeLens AI Unique
+#  What Makes CodeLens AI Unique
 
 - AI-driven contextual code analysis
 - Converts LLM responses into structured engineering metrics
@@ -292,7 +292,7 @@ The architecture is modular and designed for scalability.
 
 ---
 
-###  Future Enhancements
+#  Future Enhancements
 
 - GitHub webhook auto-analysis
 - AI pull request review bot
@@ -303,7 +303,7 @@ The architecture is modular and designed for scalability.
 
 ---
 
-###  Vision
+#  Vision
 
 CodeLens AI aims to become a comprehensive AI-powered Developer Intelligence Platform that enables:
 
