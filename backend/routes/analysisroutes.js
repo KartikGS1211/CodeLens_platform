@@ -9,8 +9,9 @@ import {
     getRepositories,
     getArchitecture, getRedFlags,
     getSkillSummary,
-    getFullAnalysis
-} from "../controllers/analysisController.js";
+    getFullAnalysis,
+    getAnalysisIssues
+} from "../controllers/analysiscontroller.js";
 
 const router = express.Router();
 //start analysis
@@ -27,6 +28,7 @@ router.get("/:id/skills-summary", getSkillSummary);
 router.get("/:id/best-practices", getBestPractices);
 router.get("/:id/red-flags", getRedFlags);
 router.get("/:id/full", getFullAnalysis);
+router.get("/:id/issues", getAnalysisIssues );
 
 // repositories
 router.get("/repositories", getRepositories);

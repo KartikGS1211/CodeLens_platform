@@ -36,7 +36,10 @@ export async function startAnalysis(req, res) {
         repositoryName: repoName,
         owner,
         status: "analyzing",
+        
         lastSyncDate: new Date(),
+        userId: req.body.userId,
+        userEmail: req.body.userEmail
       },
     });
 
@@ -46,7 +49,10 @@ export async function startAnalysis(req, res) {
     });
 
     if (analysis) {
-      // 🔁 RESET EXISTING ANALYSIS
+      await prisma.issue.deleteMany({
+        where: { analysisId: analysis.id },
+      });
+      //  RESET EXISTING ANALYSIS
       analysis = await prisma.analysis.update({
         where: { id: analysis.id },
         data: {
@@ -58,7 +64,7 @@ export async function startAnalysis(req, res) {
           qualityDimensions: null,
           qualityTrend: null,
           moduleComplexity: null,
-          recentIssues: null,
+          // recentIssues: null,
           debtForecast: null,
 
           // existing
@@ -86,7 +92,7 @@ export async function startAnalysis(req, res) {
 
     // 3️⃣ RUN PIPELINE ASYNC
     runAnalysisPipeline(analysis.id, repoUrl).catch((err) =>
-      console.error("❌ Pipeline error:", err),
+      console.error(" Pipeline error:", err),
     );
 
     return res.status(201).json({
@@ -94,7 +100,7 @@ export async function startAnalysis(req, res) {
       status: "processing",
     });
   } catch (err) {
-    console.error("❌ startAnalysis failed:", err);
+    console.error(" startAnalysis failed:", err);
     return res.status(500).json({ error: "Failed to start analysis" });
   }
 }
@@ -126,7 +132,7 @@ export async function getOverview(req, res) {
       source: analysis.source,
     });
   } catch (err) {
-    console.error("❌ getOverview failed:", err);
+    console.error("] getOverview failed:", err);
     return res.status(500).json({ error: "Failed to fetch overview" });
   }
 }
@@ -142,7 +148,7 @@ export async function getCodeQuality(req, res) {
         qualityDimensions: true,
         qualityTrend: true,
         moduleComplexity: true,
-        recentIssues: true,
+        // recentIssues: true,
         debtForecast: true,
         status: true,
       },
@@ -155,17 +161,24 @@ export async function getCodeQuality(req, res) {
     if (analysis.status !== "completed") {
       return res.status(202).json({
         status: analysis.status,
-        message: "Groq analysis not ready or failed",
+        message: " analysis not ready ",
       });
-   }
-  
+    }
+
+     //  Fetch issues from Issue table
+    const issues = await prisma.issue.findMany({
+      where: { analysisId: req.params.id },
+      orderBy: { createdAt: "desc" },
+    });
+
     return res.json({
       status: "completed",
       qualityDimensions: analysis.qualityDimensions,
       qualityTrend: analysis.qualityTrend,
       moduleComplexity: analysis.moduleComplexity,
-      recentIssues: analysis.recentIssues || [],
+      
       debtForecast: analysis.debtForecast || null,
+      recentIssues: issues,
     });
   } catch (err) {
     console.error(" getCodeQuality failed:", err);
@@ -227,9 +240,16 @@ export async function getAIReview(req, res) {
           suggestions: [],
         },
         redFlags: [],
+        issues: [],
         status: analysis.status,
       });
     }
+
+     //  Fetch issues for AI Review section
+    const issues = await prisma.issue.findMany({
+      where: { analysisId: req.params.id },
+      orderBy: { severity: "desc" },
+    });
 
     return res.json({
       review: analysis.review ?? {
@@ -238,11 +258,33 @@ export async function getAIReview(req, res) {
         suggestions: [],
       },
       redFlags: analysis.redFlags ?? [],
+      issues,
       status: "completed",
+      
     });
   } catch (err) {
-    console.error("❌ getAIReview failed:", err);
+    console.error(" getAIReview failed:", err);
     res.status(500).json({ error: "Failed to fetch AI review" });
+  }
+}
+
+/**
+ * GET ISSUES (NEW)
+ */
+export async function getAnalysisIssues(req, res) {
+  try {
+    const issues = await prisma.issue.findMany({
+      where: { analysisId: req.params.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.json({
+      success: true,
+      issues,
+    });
+  } catch (err) {
+    console.error("❌ getAnalysisIssues failed:", err);
+    return res.status(500).json({ error: "Failed to fetch issues" });
   }
 }
 
@@ -350,7 +392,18 @@ export async function getRedFlags(req, res) {
  */
 export async function getRepositories(req, res) {
   try {
+    const { userId } = req.query;   //  get userId from request
+
+    if (!userId) {
+      return res.status(400).json({
+        error: "userId is required",
+      });
+    }
+
     const repos = await prisma.repository.findMany({
+      where:{
+        userId: userId,
+      },
       include: {
         analysis: {
           select: {
@@ -382,6 +435,9 @@ export async function getFullAnalysis(req, res) {
 
   const analysis = await prisma.analysis.findUnique({
     where: { id: analysisId },
+      include: {
+        issues: true,
+      },
   });
 
   if (!analysis) {

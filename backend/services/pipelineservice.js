@@ -6,20 +6,20 @@ import { normalizeQuality } from "./qualityNormalizer.js";
 
 export async function runAnalysisPipeline(analysisId, repoUrl) {
   try {
-    console.log("🚀 Starting analysis pipeline for:", repoUrl);
+    console.log(" Starting analysis pipeline for:", repoUrl);
 
     const parts = repoUrl.replace(/\/$/, "").split("/");
     const owner = parts[3];
     const repo = parts[4];
 
     /**
-     * 1️⃣ Fetch GitHub metadata
+     *  Fetch GitHub metadata
      */
     let repoData;
     try {
       repoData = await fetchRepoData(owner, repo);
     } catch (err) {
-      console.error("❌ GitHub fetch failed:", err.message);
+      console.error(" GitHub fetch failed:", err.message);
 
       await prisma.analysis.update({
         where: { id: analysisId },
@@ -55,33 +55,23 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
       return;
     }
 
-    //  SAFE INPUT LIMITER (minimal change)
-    let safeCodeFiles = codeFiles;
+    //  SAFETY LIMITER ENABLED
+    const MAX_FILES = 25;
+    const MAX_FILE_CHARS = 12000;
 
-    // Rough safety cap (prevents 413)
-    const MAX_FILES = 25; // limit number of files
-    const MAX_FILE_CHARS = 12000; // limit per file size
-
-    safeCodeFiles = codeFiles.slice(0, MAX_FILES).map((file) => ({
-      ...file,
-      content:
-        file.content.length > MAX_FILE_CHARS
-          ? file.content.slice(0, MAX_FILE_CHARS)
-          : file.content,
-    }));
+    const safeCodeFiles = codeFiles
+      .slice(0, MAX_FILES)
+      .map((file) => ({
+        ...file,
+        content:
+          file.content.length > MAX_FILE_CHARS
+            ? file.content.slice(0, MAX_FILE_CHARS)
+            : file.content,
+      }));
 
     const aiResult = await aiEvaluate(safeCodeFiles);
 
-    if (
-      !Array.isArray(aiResult.achievements) ||
-      aiResult.achievements.length === 0 ||
-      !Array.isArray(aiResult.growthRecommendations) ||
-      aiResult.growthRecommendations.length === 0
-    ) {
-      throw new Error(
-        "Groq did not return achievements or growthRecommendations",
-      );
-    }
+    
 
     if (!aiResult || !aiResult.moduleComplexity) {
       throw new Error("AI evaluation failed to return valid fields");
@@ -89,6 +79,7 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
 
     // 🔹 Build Code Quality Page data
     const normalizedQuality = normalizeQuality(aiResult);
+
     // DEBT FORECAST SAFE HANDLING
     const safeDebtForecast = aiResult.debtForecast
       ? {
@@ -97,9 +88,7 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
           projectedRiskIncrease: Number(
             aiResult.debtForecast.projectedRiskIncrease ?? 0,
           ),
-          // estimatedRefactorHours: Number(
-          //   aiResult.debtForecast.estimatedRefactorHours ?? 0,
-          // ),
+          
           estimatedRefactorHours: Math.min(
             Number(aiResult.debtForecast.estimatedRefactorHours ?? 0),
             60, // cap at 60 hours
@@ -208,9 +197,9 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
       ? aiResult.redFlags
       : [];
 
-    const safeRecentIssues = Array.isArray(aiResult.recentIssues)
-      ? aiResult.recentIssues
-      : [];
+    // const safeRecentIssues = Array.isArray(aiResult.recentIssues)
+    //   ? aiResult.recentIssues
+    //   : [];
 
     const safeAchievements = aiResult.achievements;
 
@@ -285,7 +274,7 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
         qualityDimensions: normalizedQuality.qualityDimensions,
         qualityTrend: qualityTrend,
         moduleComplexity: normalizedQuality.moduleComplexity,
-        recentIssues: normalizedQuality.recentIssues,
+        // recentIssues: normalizedQuality.recentIssues,
         debtForecast: safeDebtForecast,
 
         skillSummary: finalSkillSummary,
@@ -298,6 +287,41 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
       },
     });
 
+    //  Delete old issues (if re-run)
+    await prisma.issue.deleteMany({
+      where: { analysisId: analysisId },
+    });
+
+    //  Insert new issues safely
+    if (
+      Array.isArray(aiResult.recentIssues) &&
+      aiResult.recentIssues.length > 0
+    ) {
+      await prisma.issue.createMany({
+        data: aiResult.recentIssues.map((issue) => ({
+          title: issue.title ?? "Untitled Issue",
+          description: issue.description ?? "",
+          explanation: issue.explanation ?? "",
+
+          filePath: issue.filePath ?? "",
+          line: Number(issue.line ?? 0),
+
+          severity: issue.severity ?? "medium",
+          category: issue.category ?? "maintainability",
+
+          currentCode: issue.currentCode ?? "",
+          suggestedCode: issue.suggestedCode ?? "",
+
+          fixType: issue.fixType ?? "replace",
+
+          confidence: Number(issue.confidence ?? 70),
+          impactScore: Number(issue.impactScore ?? 5),
+
+          analysisId: analysisId,
+        })),
+      });
+    }
+
     /**
      *  Mark repository as completed
      */
@@ -309,7 +333,7 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
       },
     });
 
-    console.log("🎉 Analysis pipeline completed successfully");
+    console.log(" Analysis pipeline completed successfully");
   } catch (err) {
     /**
      * Absolute last-resort failure handler
