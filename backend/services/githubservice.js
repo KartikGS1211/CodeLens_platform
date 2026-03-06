@@ -9,7 +9,7 @@ const githubClient = axios.create({
   timeout: 15000,
   headers: {
     Authorization: process.env.GITHUB_TOKEN
-      ? `Bearer ${process.env.GITHUB_TOKEN}`
+      ? `token ${process.env.GITHUB_TOKEN}`
       : undefined,
     Accept: "application/vnd.github+json",
   },
