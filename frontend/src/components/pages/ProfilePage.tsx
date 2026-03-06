@@ -238,6 +238,6 @@ export default function ProfilePage() {
   return (
     <MemberProtectedRoute messageToSignIn="Sign in to access your profile">
       <ProfilePageContent />
-    // </MemberProtectedRoute>
+     </MemberProtectedRoute> 
   );
 }
