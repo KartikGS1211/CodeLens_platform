@@ -100,7 +100,7 @@ export default function HomePage() {
     try {
       setStartingAnalysis(true);
 
-      const res = await axios.post("http://localhost:5000/api/analysis/start", {
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/analysis/start`, {
         repoUrl,
         userId: member?._id,
         userEmail: member?.loginEmail
