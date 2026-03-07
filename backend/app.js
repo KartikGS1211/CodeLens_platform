@@ -7,7 +7,6 @@ const app = express();
 app.use(cors(
     {
     origin: [
-      "http://localhost:5173",
       "https://codelens-ai-752d.onrender.com"
     ],
   }
