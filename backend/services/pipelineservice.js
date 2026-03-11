@@ -4,27 +4,23 @@ import { aiEvaluate } from "./aiservice.js";
 import { calculateSkillsLevel } from "../utils/skillutils.js";
 import { normalizeQuality } from "./qualityNormalizer.js";
 
-function writeFallback(analysisId, repoUrl, repoData, reason) {
-  return prisma.analysis.update({
+async function writeFallback(analysisId, repoUrl, repoData, reason) {
+
+  console.log("Fallback triggered:", reason);
+
+  await prisma.analysis.update({
     where: { id: analysisId },
     data: {
-      repoName: repoData?.name || repoUrl.split("/").pop() || "Repository",
+      repoName: repoData?.name || repoUrl.split("/").pop(),
       languages: repoData?.languages || [],
       commits: repoData?.commits || 0,
       files: repoData?.files || 0,
+
       architecture: {},
-      skillRadar: null,
-      developerProfile: {
-        overallScore: 60,
-        skillsTracked: 4,
-        growthRate: 5,
-        level: "Intermediate",
-      },
-      achievements: [],
-      growthRecommendations: [],
       review: { strengths: [], weaknesses: [], suggestions: [] },
       bestPractices: [],
       redFlags: [],
+
       qualityDimensions: {
         readability: 60,
         maintainability: 60,
@@ -33,36 +29,27 @@ function writeFallback(analysisId, repoUrl, repoData, reason) {
         reliability: 55,
         documentation: 55,
       },
-      qualityTrend: [],
-      moduleComplexity: [],
-      debtForecast: null,
-      skillSummary: reason || "Fallback analysis completed",
-      overallVerdict: reason || "Fallback analysis completed",
+
+      skillSummary: reason,
+      overallVerdict: reason,
+
       source: "fallback",
       analyzedAt: new Date(),
       status: "completed",
     },
-  }).then(() =>
-    prisma.repository.update({
-      where: { repositoryUrl: repoUrl },
-      data: { status: "connected", lastSyncDate: new Date() },
-    })
-  );
+  });
+
+  await prisma.repository.update({
+    where: { repositoryUrl: repoUrl },
+    data: { status: "connected", lastSyncDate: new Date() },
+  });
 }
 
 export async function runAnalysisPipeline(analysisId, repoUrl) {
   try {
     console.log(" Starting analysis pipeline for:", repoUrl);
 
-    const parts = repoUrl.replace(/\/$/, "").split("/");
-    const owner = parts[3];
-    const repo = parts[4];
-
-    // Environment sanity checks to avoid silent failures in production
-    if (!process.env.GROQ_API_KEY) {
-      await writeFallback(analysisId, repoUrl, null, "GROQ_API_KEY missing; returned fallback results");
-      return;
-    }
+    const { owner, repo } = parseRepoUrl(repoUrl);
 
     /**
      *  Fetch GitHub metadata
@@ -82,6 +69,8 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
      */
     const codeFiles = await parseFiles(owner, repo);
 
+    console.log("Parsed files:", codeFiles.length);
+
     //  No analyzable files → deterministic fallback
     if (!codeFiles || codeFiles.length === 0) {
       await writeFallback(analysisId, repoUrl, repoData, "No valid code files found; fallback summary");
@@ -89,18 +78,20 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
     }
 
     //  SAFETY LIMITER ENABLED
-    const MAX_FILES = 25;
-    const MAX_FILE_CHARS = 12000;
+    const MAX_FILES = 20;
+    // const MAX_FILE_CHARS = 12000;
 
-    const safeCodeFiles = codeFiles
-      .slice(0, MAX_FILES)
-      .map((file) => ({
-        ...file,
-        content:
-          file.content.length > MAX_FILE_CHARS
-            ? file.content.slice(0, MAX_FILE_CHARS)
-            : file.content,
-      }));
+    // const safeCodeFiles = codeFiles
+    //   .slice(0, MAX_FILES)
+    //   .map((file) => ({
+    //     ...file,
+    //     content:
+    //       file.content.length > MAX_FILE_CHARS
+    //         ? file.content.slice(0, MAX_FILE_CHARS)
+    //         : file.content,
+    //   }));
+
+    const safeCodeFiles = codeFiles.slice(0, MAX_FILES);
 
     let aiResult;
     try {
@@ -122,22 +113,22 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
     // DEBT FORECAST SAFE HANDLING
     const safeDebtForecast = aiResult.debtForecast
       ? {
-          currentDebtScore: Number(aiResult.debtForecast.currentDebtScore ?? 0),
-          riskLevel: aiResult.debtForecast.riskLevel ?? "Unknown",
-          projectedRiskIncrease: Number(
-            aiResult.debtForecast.projectedRiskIncrease ?? 0,
-          ),
-          
-          estimatedRefactorHours: Math.min(
-            Number(aiResult.debtForecast.estimatedRefactorHours ?? 0),
-            60, // cap at 60 hours
-          ),
-          maintainabilityDeclineProbability:
-            aiResult.debtForecast.maintainabilityDeclineProbability ??
-            "Unknown",
-          aiInsight:
-            aiResult.debtForecast.aiInsight ?? "AI insight unavailable.",
-        }
+        currentDebtScore: Number(aiResult.debtForecast.currentDebtScore ?? 0),
+        riskLevel: aiResult.debtForecast.riskLevel ?? "Unknown",
+        projectedRiskIncrease: Number(
+          aiResult.debtForecast.projectedRiskIncrease ?? 0,
+        ),
+
+        estimatedRefactorHours: Math.min(
+          Number(aiResult.debtForecast.estimatedRefactorHours ?? 0),
+          60, // cap at 60 hours
+        ),
+        maintainabilityDeclineProbability:
+          aiResult.debtForecast.maintainabilityDeclineProbability ??
+          "Unknown",
+        aiInsight:
+          aiResult.debtForecast.aiInsight ?? "AI insight unavailable.",
+      }
       : null;
 
     console.log(" Debt Forecast:", safeDebtForecast);
@@ -145,14 +136,14 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
     //  Dynamic Skill Radar Safe Handling (NEW)
     const safeSkillRadar = aiResult.skillRadar
       ? {
-          domain: aiResult.skillRadar.domain ?? "General",
-          labels: Array.isArray(aiResult.skillRadar.labels)
-            ? aiResult.skillRadar.labels
-            : [],
-          values: Array.isArray(aiResult.skillRadar.values)
-            ? aiResult.skillRadar.values.map((v) => Number(v))
-            : [],
-        }
+        domain: aiResult.skillRadar.domain ?? "General",
+        labels: Array.isArray(aiResult.skillRadar.labels)
+          ? aiResult.skillRadar.labels
+          : [],
+        values: Array.isArray(aiResult.skillRadar.values)
+          ? aiResult.skillRadar.values.map((v) => Number(v))
+          : [],
+      }
       : null;
 
     const isFallback = aiResult.__source === "fallback";
@@ -184,7 +175,7 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
 
     const overallScore = Math.round(
       Object.values(qualityDimensions).reduce((a, b) => a + b, 0) /
-        Object.values(qualityDimensions).length,
+      Object.values(qualityDimensions).length,
     );
 
     const qualityTrend = [
@@ -258,7 +249,7 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
         safeCodeQuality.maintainability +
         safeCodeQuality.security +
         safeCodeQuality.performance) /
-        4,
+      4,
     );
 
     const safeDeveloperProfile = {
@@ -381,6 +372,6 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
       repoUrl,
       null,
       `Pipeline crashed: ${err?.message || "unexpected error"}`
-    ).catch(() => {});
+    ).catch(() => { });
   }
 }

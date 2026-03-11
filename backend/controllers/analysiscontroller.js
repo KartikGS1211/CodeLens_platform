@@ -2,27 +2,48 @@ import prisma from "../db/prisma.js";
 import { runAnalysisPipeline } from "../services/pipelineservice.js";
 
 /**
+ * Extract owner/repo from GitHub URL safely
+ */
+function parseRepo(repoUrl) {
+  const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
+
+  if (!match) {
+    throw new Error("Invalid GitHub repository format");
+  }
+
+  return {
+    owner: match[1],
+    repoName: match[2].replace(".git", ""),
+  };
+}
+
+
+/**
  * START ANALYSIS
  */
 export async function startAnalysis(req, res) {
   try {
     const { repoUrl } = req.body;
 
-    if (!repoUrl || !repoUrl.startsWith("https://github.com/")) {
+    // if (!repoUrl || !repoUrl.startsWith("https://github.com"))
+    if (!repoUrl || !repoUrl.includes("github.com")) {
       return res.status(400).json({ error: "Invalid GitHub repository URL" });
     }
 
-    const parts = repoUrl.replace(/\/$/, "").split("/");
-    if (parts.length < 5) {
-      return res
-        .status(400)
-        .json({ error: "Invalid GitHub repository format" });
-    }
+    // const parts = repoUrl.replace(/\/$/, "").split("/");
+    // if (parts.length < 5) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: "Invalid GitHub repository format" });
+    // }
 
-    const owner = parts[3];
-    const repoName = parts[4];
+    // const owner = parts[3];
+    // const repoName = parts[4];
 
-    // 1️⃣ UPSERT REPOSITORY FIRST
+
+    const { owner, repoName } = parseRepo(repoUrl);
+
+    //  UPSERT REPOSITORY FIRST
     const repository = await prisma.repository.upsert({
       where: { repositoryUrl: repoUrl },
       update: {
@@ -36,14 +57,13 @@ export async function startAnalysis(req, res) {
         repositoryName: repoName,
         owner,
         status: "analyzing",
-        
         lastSyncDate: new Date(),
         userId: req.body.userId,
         userEmail: req.body.userEmail
       },
     });
 
-    // 2️⃣ CHECK IF ANALYSIS ALREADY EXISTS
+    //  CHECK IF ANALYSIS ALREADY EXISTS
     let analysis = await prisma.analysis.findUnique({
       where: { repositoryId: repository.id },
     });
@@ -52,6 +72,7 @@ export async function startAnalysis(req, res) {
       await prisma.issue.deleteMany({
         where: { analysisId: analysis.id },
       });
+
       //  RESET EXISTING ANALYSIS
       analysis = await prisma.analysis.update({
         where: { id: analysis.id },
@@ -77,12 +98,14 @@ export async function startAnalysis(req, res) {
         },
       });
     } else {
-      // 🆕 CREATE NEW ANALYSIS
+      //  CREATE NEW ANALYSIS
       analysis = await prisma.analysis.create({
         data: {
           repoUrl,
           repoName,
           languages: [],
+          commits: 0,
+          files: 0,
           status: "processing",
           source: "pending",
           repositoryId: repository.id,
@@ -90,7 +113,7 @@ export async function startAnalysis(req, res) {
       });
     }
 
-    // 3️⃣ RUN PIPELINE ASYNC
+    // RUN PIPELINE ASYNC
     runAnalysisPipeline(analysis.id, repoUrl).catch((err) =>
       console.error(" Pipeline error:", err),
     );
@@ -165,7 +188,7 @@ export async function getCodeQuality(req, res) {
       });
     }
 
-     //  Fetch issues from Issue table
+    //  Fetch issues from Issue table
     const issues = await prisma.issue.findMany({
       where: { analysisId: req.params.id },
       orderBy: { createdAt: "desc" },
@@ -176,7 +199,7 @@ export async function getCodeQuality(req, res) {
       qualityDimensions: analysis.qualityDimensions,
       qualityTrend: analysis.qualityTrend,
       moduleComplexity: analysis.moduleComplexity,
-      
+
       debtForecast: analysis.debtForecast || null,
       recentIssues: issues,
     });
@@ -245,7 +268,7 @@ export async function getAIReview(req, res) {
       });
     }
 
-     //  Fetch issues for AI Review section
+    //  Fetch issues for AI Review section
     const issues = await prisma.issue.findMany({
       where: { analysisId: req.params.id },
       orderBy: { severity: "desc" },
@@ -260,7 +283,7 @@ export async function getAIReview(req, res) {
       redFlags: analysis.redFlags ?? [],
       issues,
       status: "completed",
-      
+
     });
   } catch (err) {
     console.error(" getAIReview failed:", err);
@@ -427,9 +450,9 @@ export async function getFullAnalysis(req, res) {
 
   const analysis = await prisma.analysis.findUnique({
     where: { id: analysisId },
-      include: {
-        issues: true,
-      },
+    include: {
+      issues: true,
+    },
   });
 
   if (!analysis) {
