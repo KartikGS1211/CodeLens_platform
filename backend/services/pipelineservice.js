@@ -374,21 +374,13 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
 
     console.log(" Analysis pipeline completed successfully");
   } catch (err) {
-    /**
-     * Absolute last-resort failure handler
-     * This should almost never execute
-     */
-    console.error("❌ PIPELINE CRITICAL FAILURE:", err);
-
-    await prisma.analysis
-      .update({
-        where: { id: analysisId },
-        data: {
-          status: "failed",
-          source: "fallback",
-          skillSummary: "Unexpected error during analysis pipeline",
-        },
-      })
-      .catch(() => {});
+    // Absolute last-resort failure handler
+    console.error("? PIPELINE CRITICAL FAILURE:", err);
+    await writeFallback(
+      analysisId,
+      repoUrl,
+      null,
+      `Pipeline crashed: ${err?.message || "unexpected error"}`
+    ).catch(() => {});
   }
 }
