@@ -45,6 +45,17 @@ async function writeFallback(analysisId, repoUrl, repoData, reason) {
   });
 }
 
+function parseRepoUrl(repoUrl) {
+  const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
+  if (!match) {
+    throw new Error("Invalid GitHub repository URL");
+  }
+  return {
+    owner: match[1],
+    repo: match[2].replace(".git", ""),
+  };
+}
+
 export async function runAnalysisPipeline(analysisId, repoUrl) {
   try {
     console.log(" Starting analysis pipeline for:", repoUrl);
@@ -273,7 +284,7 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
 
     console.log(
       "PIPELINE MODULE COMPLEXITY:",
-      JSON.stringify(aiResult.modelComplexity, null, 2),
+      JSON.stringify(aiResult.moduleComplexity, null, 2),
     );
 
     console.log("SAVING QUALITY DIMENSIONS:", qualityDimensions);
