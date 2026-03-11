@@ -220,6 +220,10 @@ export default function HomePage() {
                       alert("Analysis not ready yet");
                       return;
                     }
+                    if (repo.analysis?.status === "failed") {
+                      alert("Analysis failed. Please re-run from the dashboard and check backend logs.");
+                      return;
+                    }
                     if (repo.analysis?.status !== "completed") {
                       alert("Analysis still running");
                       return;
