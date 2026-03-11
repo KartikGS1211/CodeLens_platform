@@ -51,6 +51,8 @@ export async function startAnalysis(req, res) {
         owner,
         status: "analyzing",
         lastSyncDate: new Date(),
+        userId: req.body.userId,
+        userEmail: req.body.userEmail
       },
       create: {
         repositoryUrl: repoUrl,
@@ -418,7 +420,7 @@ export async function getRepositories(req, res) {
     const { userId } = req.query;   //  get userId from request
 
     const repos = await prisma.repository.findMany({
-      where: userId ? { userId } : {},
+      where: userId ? { OR: [{ userId }, { userId: null }] } : {},
       include: {
         analysis: {
           select: {
