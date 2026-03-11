@@ -32,16 +32,16 @@ export default defineConfig({
           if (command === "dev") {
             injectScript(
               "page",
-              `const version = new URLSearchParams(location.search).get('framewire');
-              if (version){
-                const localUrl = 'http://localhost:3202/framewire/index.mjs';
-                const cdnUrl = `https://static.parastorage.com/services/framewire/${version}/index.mjs`;
-                const url = version === 'local' ? localUrl : cdnUrl;
-                const framewireModule = await import(/* @vite-ignore */ url);
-                globalThis.framewire = framewireModule;
-                framewireModule.init({}, import.meta.hot);
-                console.log('Framewire initialized');
-              }`
+              "const version = new URLSearchParams(location.search).get('framewire');\n" +
+                "if (version){\n" +
+                "  const localUrl = 'http://localhost:3202/framewire/index.mjs';\n" +
+                "  const cdnUrl = 'https://static.parastorage.com/services/framewire/' + version + '/index.mjs';\n" +
+                "  const url = version === 'local' ? localUrl : cdnUrl;\n" +
+                "  const framewireModule = await import(/* @vite-ignore */ url);\n" +
+                "  globalThis.framewire = framewireModule;\n" +
+                "  framewireModule.init({}, import.meta.hot);\n" +
+                "  console.log('Framewire initialized');\n" +
+                "}"
             );
           }
         },
