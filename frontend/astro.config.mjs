@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
-import adapter from "@astrojs/adapter-static";
+import node from "@astrojs/node";
 import cloudProviderFetchAdapter from "@wix/cloud-provider-fetch-adapter";
 import wix from "@wix/astro";
 import monitoring from "@wix/monitoring-astro";
@@ -20,9 +20,9 @@ const __dirname = path.dirname(__filename);
 const isBuild = process.env.NODE_ENV === "production";
 
 export default defineConfig({
-  // Render fully on the client; deploy as static assets to avoid serverless runtime crashes.
-  adapter: adapter(),
-  output: "static",
+  // Use Node adapter for SSR features required by wix auth; Render supports Node runtime.
+  adapter: node({ mode: "standalone" }),
+  output: "server",
 
   integrations: [
     {
