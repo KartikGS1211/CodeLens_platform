@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
+import adapter from "@astrojs/adapter-static";
 import cloudProviderFetchAdapter from "@wix/cloud-provider-fetch-adapter";
 import wix from "@wix/astro";
 import monitoring from "@wix/monitoring-astro";
@@ -8,10 +9,10 @@ import react from "@astrojs/react";
 import sourceAttrsPlugin from "@wix/babel-plugin-jsx-source-attrs";
 import dynamicDataPlugin from "@wix/babel-plugin-jsx-dynamic-data";
 import customErrorOverlayPlugin from "./vite-error-overlay-plugin.js";
-import path from "path"; 
-import 'dotenv/config';
+import path from "path";
+import "dotenv/config";
 
-import { fileURLToPath } from "url"; 
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,7 @@ const isBuild = process.env.NODE_ENV === "production";
 
 export default defineConfig({
   // Render fully on the client; deploy as static assets to avoid serverless runtime crashes.
+  adapter: adapter(),
   output: "static",
 
   integrations: [
@@ -33,7 +35,7 @@ export default defineConfig({
               `const version = new URLSearchParams(location.search).get('framewire');
               if (version){
                 const localUrl = 'http://localhost:3202/framewire/index.mjs';
-                const cdnUrl = \`https://static.parastorage.com/services/framewire/\${version}/index.mjs\`;
+                const cdnUrl = `https://static.parastorage.com/services/framewire/${version}/index.mjs`;
                 const url = version === 'local' ? localUrl : cdnUrl;
                 const framewireModule = await import(/* @vite-ignore */ url);
                 globalThis.framewire = framewireModule;
@@ -65,12 +67,11 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "src"), 
+        "@": path.resolve(__dirname, "src"),
       },
     },
     plugins: [customErrorOverlayPlugin()],
   },
-
 
   devToolbar: {
     enabled: false,
