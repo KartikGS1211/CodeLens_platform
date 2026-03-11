@@ -199,68 +199,70 @@ export default function HomePage() {
         )}
 
         {/* REPOSITORIES */}
-        <section className="px-10 md:px-16 lg:px-24 pb-32">
-          <h2 className="text-3xl font-bold mb-10">Your Repositories</h2>
-          {loading ? (
-            <div className="h-96 flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-neon-teal border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {repositories.map((repo) => (
-                <Card
-                  key={repo.id}
-                  className="cursor-pointer border-white/10 bg-[#111] hover:border-neon-teal/50 transition-all duration-300 overflow-hidden"
-                  onClick={() => {
-                    if (!member) {
-                      alert("Please login to view analysis");
-                      return;
-                    }
-                    if (!repo.analysis?.id) {
-                      alert("Analysis not ready yet");
-                      return;
-                    }
-                    if (repo.analysis?.status === "failed") {
-                      alert("Analysis failed. Please re-run from the dashboard and check backend logs.");
-                      return;
-                    }
-                    if (repo.analysis?.status !== "completed") {
-                      alert("Analysis still running");
-                      return;
-                    }
-                    navigate(`/analysis/${repo.analysis.id}/overview`);
-                  }}
-                >
-                  <div className="p-6 border-b border-white/5 bg-white/[0.02]">
-                    <div className="flex justify-between mb-4">
-                      <GitBranch className="text-neon-teal" />
+        {member && (
+          <section className="px-10 md:px-16 lg:px-24 pb-32">
+            <h2 className="text-3xl font-bold mb-10">Your Repositories</h2>
+            {loading ? (
+              <div className="h-96 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-neon-teal border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {repositories.map((repo) => (
+                  <Card
+                    key={repo.id}
+                    className="cursor-pointer border-white/10 bg-[#111] hover:border-neon-teal/50 transition-all duration-300 overflow-hidden"
+                    onClick={() => {
+                      if (!member) {
+                        alert("Please login to view analysis");
+                        return;
+                      }
+                      if (!repo.analysis?.id) {
+                        alert("Analysis not ready yet");
+                        return;
+                      }
+                      if (repo.analysis?.status === "failed") {
+                        alert("Analysis failed. Please re-run from the dashboard and check backend logs.");
+                        return;
+                      }
+                      if (repo.analysis?.status !== "completed") {
+                        alert("Analysis still running");
+                        return;
+                      }
+                      navigate(`/analysis/${repo.analysis.id}/overview`);
+                    }}
+                  >
+                    <div className="p-6 border-b border-white/5 bg-white/[0.02]">
+                      <div className="flex justify-between mb-4">
+                        <GitBranch className="text-neon-teal" />
 
-                      <span
-                        className={`text-xs px-2 py-1 border rounded ${getStatusColor(
-                          repo.analysis?.status || repo.status,
-                        )}`}
-                      >
-                        {repo.analysis?.status || repo.status}
-                      </span>
+                        <span
+                          className={`text-xs px-2 py-1 border rounded ${getStatusColor(
+                            repo.analysis?.status || repo.status,
+                          )}`}
+                        >
+                          {repo.analysis?.status || repo.status}
+                        </span>
+                      </div>
+
+                      <h3 className="text-xl font-bold">{repo.repositoryName}</h3>
+
+                      <p className="text-xs text-white/50 mt-1">
+                        {repo.owner || "Unknown"}
+                      </p>
                     </div>
 
-                    <h3 className="text-xl font-bold">{repo.repositoryName}</h3>
-
-                    <p className="text-xs text-white/50 mt-1">
-                      {repo.owner || "Unknown"}
-                    </p>
-                  </div>
-
-                  <div className="p-6 text-sm text-white/60">
-                    {repo.analysis?.status === "completed"
-                      ? "Click to view analysis results"
-                      : "Analysis not completed"}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
+                    <div className="p-6 text-sm text-white/60">
+                      {repo.analysis?.status === "completed"
+                        ? "Click to view analysis results"
+                        : "Analysis not completed"}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <footer className="py-12 text-center text-xs text-white/30">
           © 2026 CodeLens AI — SYSTEM OPERATIONAL

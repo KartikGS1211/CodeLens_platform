@@ -20,7 +20,7 @@ export const MemberProvider: React.FC<MemberProviderProps> = ({ children }) => {
         if (stored) {
           const parsedData = JSON.parse(stored);
           // Only use member data from localStorage, not authentication status
-          storedMemberData = parsedData;
+          storedMemberData = parsedData.member || null;
         }
       } catch (error) {
         console.error('Error loading member state from localStorage:', error);
