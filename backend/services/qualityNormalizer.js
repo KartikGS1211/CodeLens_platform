@@ -11,7 +11,7 @@ export function normalizeQuality(aiData) {
   const qualityDimensions = {
     readability: uiScore,
     maintainability: uiScore,
-    security: Number(aiData.stackSkills?.security),
+    security: Number(aiData.stackSkills?.security ?? 60),
     performance: uiScore,
     reliability: uiScore,
     documentation: uiScore,
