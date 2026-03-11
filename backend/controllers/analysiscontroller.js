@@ -419,8 +419,12 @@ export async function getRepositories(req, res) {
   try {
     const { userId } = req.query;   //  get userId from request
 
+    if (!userId || userId === 'undefined') {
+      return res.json({ repositories: [] });
+    }
+
     const repos = await prisma.repository.findMany({
-      where: userId ? { OR: [{ userId }, { userId: null }] } : {},
+      where: { userId },
       include: {
         analysis: {
           select: {
