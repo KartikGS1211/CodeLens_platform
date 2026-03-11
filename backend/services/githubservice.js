@@ -16,10 +16,28 @@ const githubClient = axios.create({
 });
 
 /**
+ * Parse GitHub repo URL
+ */
+export function parseRepoUrl(repoUrl) {
+  const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
+
+  if (!match) {
+    throw new Error("Invalid GitHub repo URL");
+  }
+
+  return {
+    owner: match[1],
+    repo: match[2].replace(".git", ""),
+  };
+}
+
+/**
  * Fetch repository metadata
  */
 export async function fetchRepoData(owner, repo) {
   try {
+    console.log("Fetching repo:", owner, repo);
+
     const repoRes = await githubClient.get(`/repos/${owner}/${repo}`);
     const langRes = await githubClient.get(`/repos/${owner}/${repo}/languages`);
 
@@ -29,10 +47,16 @@ export async function fetchRepoData(owner, repo) {
       const commitsRes = await githubClient.get(
         `/repos/${owner}/${repo}/commits?per_page=1`,
       );
-      const match = commitsRes.headers.link?.match(/page=(\d+)>; rel="last"/);
-      commitCount = match ? Number(match[1]) : commitsRes.data.length;
+      const link = commitsRes.headers.link;
+
+      if (link) {
+        const match = link.match(/page=(\d+)>; rel="last"/);
+        commitCount = match ? Number(match[1]) : commitsRes.data.length;
+      } else {
+        commitCount = commitsRes.data.length;
+      }
     } catch {
-      commitCount = 0;
+      console.warn("Commit count fetch failed");
     }
 
     return {
@@ -55,6 +79,8 @@ export async function fetchRepoData(owner, repo) {
  */
 export async function parseFiles(owner, repo) {
   try {
+    console.log("Parsing files for:", owner, repo);
+
     //  Get default branch dynamically
     const repoRes = await githubClient.get(`/repos/${owner}/${repo}`);
     const branch = repoRes.data.default_branch;
@@ -67,6 +93,7 @@ export async function parseFiles(owner, repo) {
     );
 
     const commitSha = refRes.data.object.sha;
+
     console.log("Commit SHA:", commitSha);
 
     //  Fetch repo tree using SHA (IMPORTANT)
@@ -75,7 +102,14 @@ export async function parseFiles(owner, repo) {
     );
 
     const tree = treeRes.data.tree || [];
+
     console.log("Tree files count:", tree.length);
+
+
+    if (tree.length === 0) {
+      console.warn(" Repo tree empty");
+      return [];
+    }
 
     //  Select meaningful files only
     const importantFiles = tree
@@ -84,36 +118,36 @@ export async function parseFiles(owner, repo) {
           file.type === "blob" &&
           (
             //  Frontend 
-      file.path.endsWith(".js") ||
-      file.path.endsWith(".jsx") ||
-      file.path.endsWith(".ts") ||
-      file.path.endsWith(".tsx") ||
-      file.path.endsWith(".html") ||
-      file.path.endsWith(".htm") ||
-      file.path.endsWith(".css") ||
-      file.path.endsWith(".scss") ||
-      file.path.endsWith(".sass") ||
-      file.path.endsWith(".less") ||
-      file.path.endsWith(".vue") ||
-      file.path.endsWith(".svelte") ||
+            file.path.endsWith(".js") ||
+            file.path.endsWith(".jsx") ||
+            file.path.endsWith(".ts") ||
+            file.path.endsWith(".tsx") ||
+            file.path.endsWith(".html") ||
+            file.path.endsWith(".htm") ||
+            file.path.endsWith(".css") ||
+            file.path.endsWith(".scss") ||
+            file.path.endsWith(".sass") ||
+            file.path.endsWith(".less") ||
+            file.path.endsWith(".vue") ||
+            file.path.endsWith(".svelte") ||
 
-      //  Backend 
-      file.path.endsWith(".py") ||
-      file.path.endsWith(".java") ||
-      file.path.endsWith(".go") ||
-      file.path.endsWith(".cs") ||
-      file.path.endsWith(".cpp") ||
-      file.path.endsWith(".c") ||
-      file.path.endsWith(".php") ||
-      file.path.endsWith(".rb") ||
-      file.path.endsWith(".rs") ||
-      file.path.endsWith(".kt") ||
-      file.path.endsWith(".swift") ||
-      file.path.endsWith(".scala")
+            //  Backend 
+            file.path.endsWith(".py") ||
+            file.path.endsWith(".java") ||
+            file.path.endsWith(".go") ||
+            file.path.endsWith(".cs") ||
+            file.path.endsWith(".cpp") ||
+            file.path.endsWith(".c") ||
+            file.path.endsWith(".php") ||
+            file.path.endsWith(".rb") ||
+            file.path.endsWith(".rs") ||
+            file.path.endsWith(".kt") ||
+            file.path.endsWith(".swift") ||
+            file.path.endsWith(".scala")
           )
       )
-      .slice(0, 8); // ⬅ limit AI cost
-      console.log("Important files found:", importantFiles.length);
+      .slice(0, 10); // ⬅ limit AI cost
+    console.log("Important files found:", importantFiles.length);
 
     const codeSnippets = [];
 
@@ -131,16 +165,16 @@ export async function parseFiles(owner, repo) {
 
         codeSnippets.push({
           path: file.path,
-          content: decoded.slice(0, 3500),
+          content: decoded.slice(0, 4000),
         });
       } catch {
-        console.warn(`⚠️ Skipped file: ${file.path}`);
+        console.warn(`Skipped file: ${file.path}`);
       }
     }
 
     return codeSnippets;
   } catch (err) {
-    console.error("❌ parseFiles failed:", err.message);
+    console.error(" parseFiles failed:", err.message);
     return []; // NEVER throw
   }
 }
