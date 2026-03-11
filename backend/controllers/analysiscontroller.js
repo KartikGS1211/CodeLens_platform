@@ -394,16 +394,8 @@ export async function getRepositories(req, res) {
   try {
     const { userId } = req.query;   //  get userId from request
 
-    if (!userId) {
-      return res.status(400).json({
-        error: "userId is required",
-      });
-    }
-
     const repos = await prisma.repository.findMany({
-      where:{
-        userId: userId,
-      },
+      where: userId ? { userId } : {},
       include: {
         analysis: {
           select: {

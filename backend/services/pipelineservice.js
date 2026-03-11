@@ -12,6 +12,23 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
     const owner = parts[3];
     const repo = parts[4];
 
+    // Environment sanity checks to avoid silent failures in production
+    if (!process.env.GROQ_API_KEY) {
+      await prisma.analysis.update({
+        where: { id: analysisId },
+        data: {
+          status: "failed",
+          source: "config",
+          skillSummary: "GROQ_API_KEY is missing on the server",
+        },
+      });
+      await prisma.repository.update({
+        where: { repositoryUrl: repoUrl },
+        data: { status: "failed", lastSyncDate: new Date() },
+      }).catch(() => {});
+      return;
+    }
+
     /**
      *  Fetch GitHub metadata
      */
