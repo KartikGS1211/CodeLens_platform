@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/apiClient";
-import { set } from "date-fns";
 
 /**A
  * Hook to fetch Skill Summary for an analysis
- * Backend: GET /analysis/:analysisId/skill-summary
+ * Backend: GET /analysis/:analysisId/skills-summary
  */
 export function useSkillSummary(analysisId?: string) {
   const [skillSummary, setSkillSummary] = useState<string>("");
@@ -25,7 +24,7 @@ export function useSkillSummary(analysisId?: string) {
     async function fetchSkillSummary() {
       try {
         const res = await apiClient.get(
-          `/analysis/${analysisId}/skill-summary`
+          `/analysis/${analysisId}/skills-summary`
         );
 
         const { status, overallVerdict , skillSummary } = res.data;

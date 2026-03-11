@@ -27,6 +27,8 @@ import AnimatedHeroGlow from "../ui/AnimatedHeroGlow";
 import { Repository } from "../../types/repository";
 import { useMember } from "../../../integrations/members/providers/MemberProvider";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://codelens-platform.onrender.com";
 
 /* ---------- TYPES ---------- */
 type StatItem = {
@@ -67,7 +69,6 @@ export default function HomePage() {
 
   /* ---------- DATA LOAD ---------- */
   useEffect(() => {
-
     if (!member) return;
 
     loadRepositories();
@@ -75,7 +76,6 @@ export default function HomePage() {
     const interval = setInterval(() => loadRepositories(true), 5000);
 
     return () => clearInterval(interval);
-
   }, [member]);
 
   const loadRepositories = async (silent = false) => {
@@ -87,7 +87,6 @@ export default function HomePage() {
       const data = await getRepositories(member._id);
 
       setRepositories(data);
-
     } catch (err) {
       console.error("Failed to load repositories", err);
     } finally {
@@ -100,10 +99,10 @@ export default function HomePage() {
     try {
       setStartingAnalysis(true);
 
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/analysis/start`, {
+      const res = await axios.post(`${API_BASE_URL}/api/analysis/start`, {
         repoUrl,
         userId: member?._id,
-        userEmail: member?.loginEmail
+        userEmail: member?.loginEmail,
       });
 
       const analysisId = res.data.analysisId;

@@ -9,7 +9,6 @@ import sourceAttrsPlugin from "@wix/babel-plugin-jsx-source-attrs";
 import dynamicDataPlugin from "@wix/babel-plugin-jsx-dynamic-data";
 import customErrorOverlayPlugin from "./vite-error-overlay-plugin.js";
 import path from "path"; 
-import vercel from "@astrojs/vercel";
 import 'dotenv/config';
 
 import { fileURLToPath } from "url"; 
@@ -20,7 +19,8 @@ const __dirname = path.dirname(__filename);
 const isBuild = process.env.NODE_ENV === "production";
 
 export default defineConfig({
-  output: "server",
+  // Render fully on the client; deploy as static assets to avoid serverless runtime crashes.
+  output: "static",
 
   integrations: [
     {
@@ -71,7 +71,6 @@ export default defineConfig({
     plugins: [customErrorOverlayPlugin()],
   },
 
-  adapter: vercel(),
 
   devToolbar: {
     enabled: false,
