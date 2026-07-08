@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
-import node from "@astrojs/node";
+import vercel from "@astrojs/vercel";
 import cloudProviderFetchAdapter from "@wix/cloud-provider-fetch-adapter";
 import wix from "@wix/astro";
 import monitoring from "@wix/monitoring-astro";
@@ -20,8 +20,8 @@ const __dirname = path.dirname(__filename);
 const isBuild = process.env.NODE_ENV === "production";
 
 export default defineConfig({
-  // Use Node adapter for SSR features required by wix auth; Render supports Node runtime.
-  adapter: node({ mode: "standalone" }),
+  // Use Vercel adapter for SSR features required by wix auth on Vercel.
+  adapter: vercel(),
   output: "server",
 
   integrations: [
@@ -41,7 +41,7 @@ export default defineConfig({
                 "  globalThis.framewire = framewireModule;\n" +
                 "  framewireModule.init({}, import.meta.hot);\n" +
                 "  console.log('Framewire initialized');\n" +
-                "}"
+                "}",
             );
           }
         },
