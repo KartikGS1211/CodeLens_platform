@@ -1,24 +1,31 @@
-import express from 'express';
+import express from "express";
+import { requireAuth } from "../middleware/auth.js";
 
-import { 
-    startAnalysis,
-    getOverview,
-    getCodeQuality,
-    getAIReview,
-    getBestPractices,
-    getRepositories,
-    getArchitecture, getRedFlags,
-    getSkillSummary,
-    getFullAnalysis,
-    getAnalysisIssues
+import {
+  startAnalysis,
+  getOverview,
+  getCodeQuality,
+  getAIReview,
+  getBestPractices,
+  getRepositories,
+  getArchitecture,
+  getRedFlags,
+  getSkillSummary,
+  getFullAnalysis,
+  getAnalysisIssues,
+  getAnalysisProgress,
 } from "../controllers/analysiscontroller.js";
 
 const router = express.Router();
+
+router.use(requireAuth);
+
 //start analysis
 router.post("/start", startAnalysis);
 
-// analysis overview    
+// analysis overview
 router.get("/:id/overview", getOverview);
+router.get("/:id/progress", getAnalysisProgress);
 
 // ai evaluation details
 router.get("/:id/code-quality", getCodeQuality);
@@ -28,7 +35,7 @@ router.get("/:id/skills-summary", getSkillSummary);
 router.get("/:id/best-practices", getBestPractices);
 router.get("/:id/red-flags", getRedFlags);
 router.get("/:id/full", getFullAnalysis);
-router.get("/:id/issues", getAnalysisIssues );
+router.get("/:id/issues", getAnalysisIssues);
 
 // repositories
 router.get("/repositories", getRepositories);

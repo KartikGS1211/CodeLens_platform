@@ -19,6 +19,18 @@ enum RepositoryStatus {
   error
 }
 
+model User {
+  id                String       @id @default(uuid())
+  githubId          String       @unique
+  username          String
+  email             String?
+  avatarUrl         String?
+  githubAccessToken String?      // sensitive GitHub token
+  repositories      Repository[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
 model Repository {
   id             String             @id @default(uuid())
   repositoryUrl  String             @unique
@@ -27,7 +39,8 @@ model Repository {
   description    String?
   status         RepositoryStatus
 
-  userId         String?   // Wix member id
+  userId         String?   
+  user           User?              @relation(fields: [userId], references: [id])
   userEmail      String?   // optional but useful
 
   // One-to-one relation

@@ -1,5 +1,6 @@
 import prisma from "../db/prisma.js";
 import { runAnalysisPipeline } from "../services/pipelineservice.js";
+import { getProgress } from "../utils/analysisProgress.js";
 
 /**
  * Extract owner/repo from GitHub URL safely
@@ -16,7 +17,6 @@ function parseRepo(repoUrl) {
     repoName: match[2].replace(".git", ""),
   };
 }
-
 
 /**
  * START ANALYSIS
@@ -40,7 +40,6 @@ export async function startAnalysis(req, res) {
     // const owner = parts[3];
     // const repoName = parts[4];
 
-
     const { owner, repoName } = parseRepo(repoUrl);
 
     //  UPSERT REPOSITORY FIRST
@@ -51,8 +50,8 @@ export async function startAnalysis(req, res) {
         owner,
         status: "analyzing",
         lastSyncDate: new Date(),
-        userId: req.body.userId,
-        userEmail: req.body.userEmail
+        userId: req.user.id,
+        userEmail: req.user.email,
       },
       create: {
         repositoryUrl: repoUrl,
@@ -60,8 +59,8 @@ export async function startAnalysis(req, res) {
         owner,
         status: "analyzing",
         lastSyncDate: new Date(),
-        userId: req.body.userId,
-        userEmail: req.body.userEmail
+        userId: req.user.id,
+        userEmail: req.user.email,
       },
     });
 
@@ -116,8 +115,8 @@ export async function startAnalysis(req, res) {
     }
 
     // RUN PIPELINE ASYNC
-    runAnalysisPipeline(analysis.id, repoUrl).catch((err) =>
-      console.error(" Pipeline error:", err),
+    runAnalysisPipeline(analysis.id, repoUrl, req.user.githubAccessToken).catch(
+      (err) => console.error(" Pipeline error:", err),
     );
 
     return res.status(201).json({
@@ -173,7 +172,6 @@ export async function getCodeQuality(req, res) {
         qualityDimensions: true,
         qualityTrend: true,
         moduleComplexity: true,
-        // recentIssues: true,
         debtForecast: true,
         status: true,
       },
@@ -196,12 +194,22 @@ export async function getCodeQuality(req, res) {
       orderBy: { createdAt: "desc" },
     });
 
+    // TASK 1: Derive qualityTrendMeta from the stored trend array.
+    // If there is only 1 data point (single-run result), hasHistory = false.
+    const trend = Array.isArray(analysis.qualityTrend)
+      ? analysis.qualityTrend
+      : [];
+    const qualityTrendMeta = {
+      hasHistory: trend.length > 1,
+      isEstimated: false,
+    };
+
     return res.json({
       status: "completed",
       qualityDimensions: analysis.qualityDimensions,
       qualityTrend: analysis.qualityTrend,
+      qualityTrendMeta,
       moduleComplexity: analysis.moduleComplexity,
-
       debtForecast: analysis.debtForecast || null,
       recentIssues: issues,
     });
@@ -285,7 +293,6 @@ export async function getAIReview(req, res) {
       redFlags: analysis.redFlags ?? [],
       issues,
       status: "completed",
-
     });
   } catch (err) {
     console.error(" getAIReview failed:", err);
@@ -417,11 +424,7 @@ export async function getRedFlags(req, res) {
  */
 export async function getRepositories(req, res) {
   try {
-    const { userId } = req.query;   //  get userId from request
-
-    if (!userId || userId === 'undefined') {
-      return res.json({ repositories: [] });
-    }
+    const userId = req.user.id;
 
     const repos = await prisma.repository.findMany({
       where: { userId },
@@ -473,4 +476,35 @@ export async function getFullAnalysis(req, res) {
     achievements: analysis.achievements,
     growthRecommendations: analysis.growthRecommendations,
   });
+}
+
+export async function getAnalysisProgress(req, res) {
+  try {
+    const analysisId = req.params.id;
+    const progress = getProgress(analysisId);
+
+    // Fallback: If not in memory store, check status in Database
+    if (!progress) {
+      const analysis = await prisma.analysis.findUnique({
+        where: { id: analysisId },
+        select: { status: true },
+      });
+
+      if (!analysis) {
+        return res.status(404).json({ error: "Analysis not found" });
+      }
+
+      return res.json({
+        chunksProcessed: analysis.status === "completed" ? 1 : 0,
+        totalChunks: 1,
+        status: analysis.status === "completed" ? "done" : "idle",
+        estimatedSecondsRemaining: 0,
+      });
+    }
+
+    return res.json(progress);
+  } catch (err) {
+    console.error("❌ getAnalysisProgress failed:", err.message);
+    return res.status(500).json({ error: "Failed to fetch analysis progress" });
+  }
 }

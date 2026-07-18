@@ -3,9 +3,13 @@ import { fetchRepoData, parseFiles } from "./githubservice.js";
 import { aiEvaluate } from "./aiservice.js";
 import { calculateSkillsLevel } from "../utils/skillutils.js";
 import { normalizeQuality } from "./qualityNormalizer.js";
+import {
+  initProgress,
+  incrementProgress,
+  completeProgress,
+} from "../utils/analysisProgress.js";
 
 async function writeFallback(analysisId, repoUrl, repoData, reason) {
-
   console.log("Fallback triggered:", reason);
 
   await prisma.analysis.update({
@@ -56,9 +60,18 @@ function parseRepoUrl(repoUrl) {
   };
 }
 
-export async function runAnalysisPipeline(analysisId, repoUrl) {
+export async function runAnalysisPipeline(
+  analysisId,
+  repoUrl,
+  githubAccessToken,
+) {
   try {
     console.log(" Starting analysis pipeline for:", repoUrl);
+
+    // Task 3: Initialize progress tracking for this analysis run.
+    // We don't know chunk count yet, so start with 1 as a placeholder;
+    // aiEvaluate will refine via the onChunkDone callback.
+    initProgress(analysisId, 1);
 
     const { owner, repo } = parseRepoUrl(repoUrl);
 
@@ -67,10 +80,15 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
      */
     let repoData;
     try {
-      repoData = await fetchRepoData(owner, repo);
+      repoData = await fetchRepoData(owner, repo, githubAccessToken);
     } catch (err) {
       console.error(" GitHub fetch failed:", err.message);
-      await writeFallback(analysisId, repoUrl, null, `GitHub fetch failed: ${err.message}`);
+      await writeFallback(
+        analysisId,
+        repoUrl,
+        null,
+        `GitHub fetch failed: ${err.message}`,
+      );
       return;
     }
 
@@ -78,13 +96,18 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
      *  Parse repository source files
      * This function must NEVER throw
      */
-    const codeFiles = await parseFiles(owner, repo);
+    const codeFiles = await parseFiles(owner, repo, githubAccessToken);
 
     console.log("Parsed files:", codeFiles.length);
 
     //  No analyzable files → deterministic fallback
     if (!codeFiles || codeFiles.length === 0) {
-      await writeFallback(analysisId, repoUrl, repoData, "No valid code files found; fallback summary");
+      await writeFallback(
+        analysisId,
+        repoUrl,
+        repoData,
+        "No valid code files found; fallback summary",
+      );
       return;
     }
 
@@ -106,40 +129,61 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
 
     let aiResult;
     try {
-      aiResult = await aiEvaluate(safeCodeFiles);
+      // Task 3: Pass progressCallback so each chunk increments the store
+      const onChunkDone = (chunkIndex, totalChunks) =>
+        incrementProgress(analysisId, totalChunks);
+      aiResult = await aiEvaluate(safeCodeFiles, onChunkDone);
     } catch (err) {
       console.error("Groq AI failed:", err.message);
-      await writeFallback(analysisId, repoUrl, repoData, "AI evaluation failed; fallback results");
+      await writeFallback(
+        analysisId,
+        repoUrl,
+        repoData,
+        "AI evaluation failed; fallback results",
+      );
       return;
     }
 
     if (!aiResult || !aiResult.moduleComplexity) {
-      await writeFallback(analysisId, repoUrl, repoData, "AI returned empty payload; fallback results");
+      await writeFallback(
+        analysisId,
+        repoUrl,
+        repoData,
+        "AI returned empty payload; fallback results",
+      );
       return;
     }
 
-    // 🔹 Build Code Quality Page data
-    const normalizedQuality = normalizeQuality(aiResult);
+    // ISSUE 2 FIX: qualityDimensions now come from the LLM's distinct per-dimension fields
+    // via normalizedQuality (which reads aiResult.qualityDimensions.* with neutral fallbacks).
+    // ISSUE 4 FIX: Log chunk coverage so the response tracks how much was analyzed.
+    if (aiResult.__chunkCoverage) {
+      console.log(
+        `Coverage: ${aiResult.__chunkCoverage.chunksProcessed}/${aiResult.__chunkCoverage.totalChunks} chunks (~${aiResult.__chunkCoverage.coveragePct}% of input analyzed)`,
+      );
+    }
 
-    // DEBT FORECAST SAFE HANDLING
+    // ISSUE 1 FIX: qualityTrend is now built from a single real data point with hasHistory:false
+    // (normalizedQuality.qualityTrend holds the array; qualityTrendMeta holds the flags)
+
     const safeDebtForecast = aiResult.debtForecast
       ? {
-        currentDebtScore: Number(aiResult.debtForecast.currentDebtScore ?? 0),
-        riskLevel: aiResult.debtForecast.riskLevel ?? "Unknown",
-        projectedRiskIncrease: Number(
-          aiResult.debtForecast.projectedRiskIncrease ?? 0,
-        ),
+          currentDebtScore: Number(aiResult.debtForecast.currentDebtScore ?? 0),
+          riskLevel: aiResult.debtForecast.riskLevel ?? "Unknown",
+          projectedRiskIncrease: Number(
+            aiResult.debtForecast.projectedRiskIncrease ?? 0,
+          ),
 
-        estimatedRefactorHours: Math.min(
-          Number(aiResult.debtForecast.estimatedRefactorHours ?? 0),
-          60, // cap at 60 hours
-        ),
-        maintainabilityDeclineProbability:
-          aiResult.debtForecast.maintainabilityDeclineProbability ??
-          "Unknown",
-        aiInsight:
-          aiResult.debtForecast.aiInsight ?? "AI insight unavailable.",
-      }
+          estimatedRefactorHours: Math.min(
+            Number(aiResult.debtForecast.estimatedRefactorHours ?? 0),
+            60, // cap at 60 hours
+          ),
+          maintainabilityDeclineProbability:
+            aiResult.debtForecast.maintainabilityDeclineProbability ??
+            "Unknown",
+          aiInsight:
+            aiResult.debtForecast.aiInsight ?? "AI insight unavailable.",
+        }
       : null;
 
     console.log(" Debt Forecast:", safeDebtForecast);
@@ -147,14 +191,14 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
     //  Dynamic Skill Radar Safe Handling (NEW)
     const safeSkillRadar = aiResult.skillRadar
       ? {
-        domain: aiResult.skillRadar.domain ?? "General",
-        labels: Array.isArray(aiResult.skillRadar.labels)
-          ? aiResult.skillRadar.labels
-          : [],
-        values: Array.isArray(aiResult.skillRadar.values)
-          ? aiResult.skillRadar.values.map((v) => Number(v))
-          : [],
-      }
+          domain: aiResult.skillRadar.domain ?? "General",
+          labels: Array.isArray(aiResult.skillRadar.labels)
+            ? aiResult.skillRadar.labels
+            : [],
+          values: Array.isArray(aiResult.skillRadar.values)
+            ? aiResult.skillRadar.values.map((v) => Number(v))
+            : [],
+        }
       : null;
 
     const isFallback = aiResult.__source === "fallback";
@@ -162,48 +206,18 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
     /**
      *  Normalize + secure AI output
      */
-    const uiScore = Number(aiResult.moduleComplexity?.UI?.score ?? 70);
+    // Run normalizer - reads per-dimension LLM fields with 50 fallbacks (Issue 2 fix)
+    const normalizedQuality = normalizeQuality(aiResult);
 
+    // safeCodeQuality reads from the already-normalized dimensions (no more uiScore copies)
     const safeCodeQuality = {
-      readability: uiScore,
-      maintainability: uiScore,
-      security: Number(aiResult.stackSkills?.security ?? 60),
-      performance: uiScore,
+      readability: normalizedQuality.qualityDimensions.readability,
+      maintainability: normalizedQuality.qualityDimensions.maintainability,
+      security: normalizedQuality.qualityDimensions.security,
+      performance: normalizedQuality.qualityDimensions.performance,
     };
 
-    // -------------------------------
-    // 🔹 Code Quality Page Normalization
-    // -------------------------------
-
-    const qualityDimensions = {
-      readability: safeCodeQuality.readability,
-      maintainability: safeCodeQuality.maintainability,
-      security: safeCodeQuality.security,
-      performance: safeCodeQuality.performance,
-      reliability: Number(aiResult.codeQuality?.reliability ?? 70),
-      documentation: Number(aiResult.codeQuality?.documentation ?? 65),
-    };
-
-    const overallScore = Math.round(
-      Object.values(qualityDimensions).reduce((a, b) => a + b, 0) /
-      Object.values(qualityDimensions).length,
-    );
-
-    const qualityTrend = [
-      { month: "Jan", score: overallScore - 15 },
-      { month: "Feb", score: overallScore - 10 },
-      { month: "Mar", score: overallScore - 6 },
-      { month: "Apr", score: overallScore - 3 },
-      { month: "May", score: overallScore - 1 },
-      { month: "Jun", score: overallScore },
-    ];
-
-    const moduleComplexity = Object.entries(
-      aiResult.moduleComplexity || {},
-    ).map(([module, data]) => ({
-      module,
-      complexity: data.score,
-    }));
+    const moduleComplexity = normalizedQuality.moduleComplexity;
 
     const safeArchitecture = {
       pattern: aiResult.architecture?.pattern ?? "Unknown",
@@ -255,12 +269,15 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
     // 🔹 Developer Profile (2-step build)
     // ----------------------------------
 
+    // computedOverallScore uses all 6 dimensions now (Issue 2 fix)
     const computedOverallScore = Math.round(
-      (safeCodeQuality.readability +
-        safeCodeQuality.maintainability +
-        safeCodeQuality.security +
-        safeCodeQuality.performance) /
-      4,
+      (normalizedQuality.qualityDimensions.readability +
+        normalizedQuality.qualityDimensions.maintainability +
+        normalizedQuality.qualityDimensions.security +
+        normalizedQuality.qualityDimensions.performance +
+        normalizedQuality.qualityDimensions.reliability +
+        normalizedQuality.qualityDimensions.documentation) /
+        6,
     );
 
     const safeDeveloperProfile = {
@@ -287,8 +304,15 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
       JSON.stringify(aiResult.moduleComplexity, null, 2),
     );
 
-    console.log("SAVING QUALITY DIMENSIONS:", qualityDimensions);
-    console.log("SAVING TREND:", qualityTrend);
+    console.log(
+      "SAVING QUALITY DIMENSIONS:",
+      normalizedQuality.qualityDimensions,
+    );
+    console.log(
+      "SAVING TREND:",
+      normalizedQuality.qualityTrend,
+      normalizedQuality.qualityTrendMeta,
+    );
     console.log("SAVING MODULE COMPLEXITY:", moduleComplexity);
 
     /**
@@ -313,7 +337,7 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
         redFlags: safeRedFlags,
 
         qualityDimensions: normalizedQuality.qualityDimensions,
-        qualityTrend: qualityTrend,
+        qualityTrend: normalizedQuality.qualityTrend, // Issue 1 fix: single real data point
         moduleComplexity: normalizedQuality.moduleComplexity,
         // recentIssues: normalizedQuality.recentIssues,
         debtForecast: safeDebtForecast,
@@ -382,7 +406,9 @@ export async function runAnalysisPipeline(analysisId, repoUrl) {
       analysisId,
       repoUrl,
       null,
-      `Pipeline crashed: ${err?.message || "unexpected error"}`
-    ).catch(() => { });
+      `Pipeline crashed: ${err?.message || "unexpected error"}`,
+    ).catch(() => {});
+  } finally {
+    completeProgress(analysisId);
   }
 }
