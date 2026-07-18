@@ -63,8 +63,14 @@ type DebtForecast = {
   aiInsight: string;
 };
 
+type QualityTrendMeta = {
+  hasHistory: boolean;
+  isEstimated: boolean;
+};
+
 type CodeQualityResponse = {
   qualityTrend: QualityTrendItem[];
+  qualityTrendMeta?: QualityTrendMeta | null;
   moduleComplexity: ModuleComplexityItem[];
   qualityDimensions: QualityDimensions;
   recentIssues: Issue[];
@@ -147,6 +153,7 @@ export default function CodeQualityPage() {
 
   const {
     qualityTrend,
+    qualityTrendMeta,
     moduleComplexity,
     qualityDimensions,
     recentIssues,
@@ -367,23 +374,57 @@ export default function CodeQualityPage() {
           {/* Quality Trend */}
           <Card className="p-6 bg-white/5 border-white/10 h-[380px]">
             <h3 className="text-xl text-white mb-4">Quality Trend</h3>
-            <div className="h-[300px]">
-              <Line
-                data={trendData}
-                options={{
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      min: 0,
-                      max: 100,
-                      ticks: {
-                        stepSize: 10,
+
+            {/* TASK 1 FIX: Check hasHistory flag from backend.
+                When false (only 1 analysis run exists), show a clear
+                no-history placeholder instead of a misleading single-point
+                line chart. The chart renders normally once hasHistory = true. */}
+            {qualityTrendMeta?.hasHistory === false ? (
+              <div className="h-[300px] flex flex-col items-center justify-center text-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                  <span className="text-2xl">📈</span>
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-lg">
+                    Not enough history yet
+                  </p>
+                  <p className="text-foreground/50 text-sm mt-1">
+                    Trend will appear after future analyses
+                  </p>
+                </div>
+                {/* Show current score as a badge instead of a chart */}
+                {qualityTrend?.[0] && (
+                  <div className="mt-2 px-6 py-3 rounded-xl bg-neon-teal/10 border border-neon-teal/30">
+                    <p className="text-xs text-foreground/50 mb-1">
+                      Current Score
+                    </p>
+                    <p className="text-3xl font-bold text-neon-teal">
+                      {qualityTrend[0].score}
+                      <span className="text-base text-foreground/50">/100</span>
+                    </p>
+                    <p className="text-xs text-foreground/40 mt-1">
+                      {qualityTrend[0].month}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="h-[300px]">
+                <Line
+                  data={trendData}
+                  options={{
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        min: 0,
+                        max: 100,
+                        ticks: { stepSize: 10 },
                       },
                     },
-                  },
-                }}
-              />
-            </div>
+                  }}
+                />
+              </div>
+            )}
           </Card>
 
           {/* Recent Issues */}

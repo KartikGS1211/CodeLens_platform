@@ -25,7 +25,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import AnimatedHeroGlow from "../ui/AnimatedHeroGlow";
 import { Repository } from "../../types/repository";
-import { useMember } from "../../../integrations/members/providers/MemberProvider";
+import { useMember } from "@/context/AuthContext";
+import apiClient from "@/lib/apiClient";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://codelens-platform.onrender.com";
@@ -99,7 +100,7 @@ export default function HomePage() {
     try {
       setStartingAnalysis(true);
 
-      const res = await axios.post(`${API_BASE_URL}/api/analysis/start`, {
+      const res = await apiClient.post("/analysis/start", {
         repoUrl,
         userId: member?._id,
         userEmail: member?.loginEmail,
@@ -222,7 +223,9 @@ export default function HomePage() {
                         return;
                       }
                       if (repo.analysis?.status === "failed") {
-                        alert("Analysis failed. Please re-run from the dashboard and check backend logs.");
+                        alert(
+                          "Analysis failed. Please re-run from the dashboard and check backend logs.",
+                        );
                         return;
                       }
                       if (repo.analysis?.status !== "completed") {
@@ -245,7 +248,9 @@ export default function HomePage() {
                         </span>
                       </div>
 
-                      <h3 className="text-xl font-bold">{repo.repositoryName}</h3>
+                      <h3 className="text-xl font-bold">
+                        {repo.repositoryName}
+                      </h3>
 
                       <p className="text-xs text-white/50 mt-1">
                         {repo.owner || "Unknown"}

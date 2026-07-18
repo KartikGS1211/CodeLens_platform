@@ -12,14 +12,13 @@ export function useCodeQuality(analysisId?: string) {
 
     async function fetchCodeQuality() {
       try {
-        const res = await apiClient.get(
-          `/analysis/${analysisId}/code-quality`
-        );
+        const res = await apiClient.get(`/analysis/${analysisId}/code-quality`);
 
         const {
           status,
           qualityDimensions,
           qualityTrend,
+          qualityTrendMeta,
           moduleComplexity,
           recentIssues,
           debtForecast,
@@ -28,10 +27,11 @@ export function useCodeQuality(analysisId?: string) {
         // still processing → keep polling
         if (status !== "completed") return;
 
-        // ✅ save full object
+        // ✅ save full object including trend metadata
         setData({
           qualityDimensions,
           qualityTrend,
+          qualityTrendMeta: qualityTrendMeta ?? null,
           moduleComplexity,
           recentIssues,
           debtForecast,

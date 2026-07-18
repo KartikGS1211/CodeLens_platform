@@ -4,6 +4,7 @@ import apiClient from "@/lib/apiClient";
 export function useAnalysisOverview(analysisId?: string) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState<any>(null);
 
   useEffect(() => {
     if (!analysisId) return;
@@ -12,9 +13,7 @@ export function useAnalysisOverview(analysisId?: string) {
 
     async function fetchOverview() {
       try {
-        const res = await apiClient.get(
-          `/analysis/${analysisId}/overview`
-        );
+        const res = await apiClient.get(`/analysis/${analysisId}/overview`);
 
         setData({
           status: res.data.status,
@@ -25,10 +24,20 @@ export function useAnalysisOverview(analysisId?: string) {
           analyzedAt: res.data.analyzedAt ?? null,
         });
 
-        if (
-          res.data.status === "completed" ||
-          res.data.status === "failed"
-        ) {
+        if (res.data.status === "processing") {
+          try {
+            const progRes = await apiClient.get(
+              `/analysis/${analysisId}/progress`,
+            );
+            setProgress(progRes.data);
+          } catch (err) {
+            console.warn("Failed to fetch progress", err);
+          }
+        } else {
+          setProgress(null);
+        }
+
+        if (res.data.status === "completed" || res.data.status === "failed") {
           clearInterval(interval);
           setLoading(false);
         }
@@ -44,5 +53,5 @@ export function useAnalysisOverview(analysisId?: string) {
     return () => clearInterval(interval);
   }, [analysisId]);
 
-  return { data, loading };
+  return { data, loading, progress };
 }

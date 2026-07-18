@@ -1,10 +1,10 @@
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { User, Mail, Calendar, LogOut, Edit2 } from 'lucide-react';
-import { useMember } from '../../../integrations';
-import { MemberProtectedRoute } from '../ui/member-protected-route';
-import { Card } from '@/components/ui/card';
-import { Image } from '@/components/ui/image';
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { User, Mail, Calendar, LogOut, Edit2 } from "lucide-react";
+import { useMember } from "@/context/AuthContext";
+import { MemberProtectedRoute } from "../ui/member-protected-route";
+import { Card } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
 
 function ProfilePageContent() {
   const { member, actions } = useMember();
@@ -12,12 +12,11 @@ function ProfilePageContent() {
 
   const handleLogout = async () => {
     await actions.logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
     <div className="min-h-screen bg-background">
-
       <main className="ml-0 px-8 py-16 md:ml-64">
         <div className="mx-auto max-w-[120rem]">
           {/* Page Header */}
@@ -47,7 +46,11 @@ function ProfilePageContent() {
                   <div className="relative">
                     <div className="h-32 w-32 rounded-full bg-gradient-to-br from-neon-teal to-secondary flex items-center justify-center border-4 border-white/10">
                       {member?.profile?.photo?.url ? (
-                        <Image src={member.profile.photo.url} alt="Profile" className="h-full w-full rounded-full object-cover" />
+                        <Image
+                          src={member.profile.photo.url}
+                          alt="Profile"
+                          className="h-full w-full rounded-full object-cover"
+                        />
                       ) : (
                         <User className="h-16 w-16 text-black" />
                       )}
@@ -58,10 +61,12 @@ function ProfilePageContent() {
                   </div>
                   <div className="text-center md:text-left">
                     <h2 className="font-heading text-3xl font-bold text-white">
-                      {member?.profile?.nickname || member?.contact?.firstName || 'User'}
+                      {member?.profile?.nickname ||
+                        member?.contact?.firstName ||
+                        "User"}
                     </h2>
                     <p className="mt-2 font-paragraph text-sm text-foreground/60">
-                      {member?.profile?.title || 'Member'}
+                      {member?.profile?.title || "Member"}
                     </p>
                   </div>
                 </div>
@@ -77,7 +82,7 @@ function ProfilePageContent() {
                       </h3>
                     </div>
                     <p className="font-paragraph text-lg text-white">
-                      {member?.loginEmail || 'No email provided'}
+                      {member?.loginEmail || "No email provided"}
                     </p>
                     {member?.loginEmailVerified && (
                       <p className="mt-2 font-paragraph text-xs text-neon-teal">
@@ -95,11 +100,15 @@ function ProfilePageContent() {
                       </h3>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`h-3 w-3 rounded-full ${
-                        member?.status === 'APPROVED' ? 'bg-neon-teal' : 'bg-secondary'
-                      }`} />
+                      <div
+                        className={`h-3 w-3 rounded-full ${
+                          member?.status === "APPROVED"
+                            ? "bg-neon-teal"
+                            : "bg-secondary"
+                        }`}
+                      />
                       <p className="font-paragraph text-lg text-white capitalize">
-                        {member?.status || 'Unknown'}
+                        {member?.status || "Unknown"}
                       </p>
                     </div>
                   </div>
@@ -114,12 +123,15 @@ function ProfilePageContent() {
                     </div>
                     <p className="font-paragraph text-lg text-white">
                       {member?._createdDate
-                        ? new Date(member._createdDate).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })
-                        : 'Date not available'}
+                        ? new Date(member._createdDate).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            },
+                          )
+                        : "Date not available"}
                     </p>
                   </div>
                 </div>
@@ -202,7 +214,7 @@ function ProfilePageContent() {
                   <span className="font-paragraph text-sm text-white">
                     {member?.lastLoginDate
                       ? new Date(member.lastLoginDate).toLocaleDateString()
-                      : 'First login'}
+                      : "First login"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-3 border-b border-white/5">
@@ -212,17 +224,21 @@ function ProfilePageContent() {
                   <span className="font-paragraph text-sm text-white">
                     {member?._createdDate
                       ? new Date(member._createdDate).toLocaleDateString()
-                      : 'Unknown'}
+                      : "Unknown"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-3">
                   <span className="font-paragraph text-sm text-foreground/60">
                     Email Verified
                   </span>
-                  <span className={`font-paragraph text-sm ${
-                    member?.loginEmailVerified ? 'text-neon-teal' : 'text-foreground/60'
-                  }`}>
-                    {member?.loginEmailVerified ? '✓ Yes' : '✗ No'}
+                  <span
+                    className={`font-paragraph text-sm ${
+                      member?.loginEmailVerified
+                        ? "text-neon-teal"
+                        : "text-foreground/60"
+                    }`}
+                  >
+                    {member?.loginEmailVerified ? "✓ Yes" : "✗ No"}
                   </span>
                 </div>
               </div>
@@ -238,6 +254,6 @@ export default function ProfilePage() {
   return (
     <MemberProtectedRoute messageToSignIn="Sign in to access your profile">
       <ProfilePageContent />
-     </MemberProtectedRoute> 
+    </MemberProtectedRoute>
   );
 }

@@ -1,11 +1,7 @@
-import axios from "axios";
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://codelens-platform.onrender.com";
-const API_BASE = `${API_BASE_URL}/api/analysis`;
+import apiClient from "@/lib/apiClient";
 
 export async function getRepositories(userId: String) {
-  const res = await axios.get(`${API_BASE}/repositories`, {
+  const res = await apiClient.get("/analysis/repositories", {
     params: { userId },
   });
   return res.data.repositories;

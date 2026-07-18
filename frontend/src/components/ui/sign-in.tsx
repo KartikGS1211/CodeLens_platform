@@ -1,6 +1,12 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useMember } from '../../../integrations';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useMember } from "@/context/AuthContext";
 
 interface SignInProps {
   title?: string;
@@ -17,7 +23,7 @@ export function SignIn({
   className = "min-h-screen flex items-center justify-center px-4 ",
   cardClassName = "w-fit max-w-xl mx-auto text-foreground",
   buttonClassName = "w-full h-10 max-w-sm mx-auto",
-  buttonText = "Sign In"
+  buttonText = "Sign In",
 }: SignInProps) {
   const { actions } = useMember();
 

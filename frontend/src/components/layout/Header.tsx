@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Code2, User, LogOut, Settings } from "lucide-react";
-import { useMember } from "../../../integrations";
+import { useMember } from "@/context/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,13 +27,9 @@ export default function Header() {
     navigate("/profile");
   };
 
-  
-
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-[120rem] items-center justify-between px-8">
-        
-
         <Link to="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-neon-teal to-secondary">
             <Code2 className="h-6 w-6 text-black" />

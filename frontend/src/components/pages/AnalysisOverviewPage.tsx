@@ -5,22 +5,38 @@ import {
   FileText,
   Layers,
   Activity,
-  ArrowRight
+  ArrowRight,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAnalysisOverview } from "@/hooks/useAnalysisOverview";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function AnalysisOverviewPage() {
   const { analysisId } = useParams();
   const navigate = useNavigate();
 
-  const { data, loading } = useAnalysisOverview(analysisId);
+  const { data, loading, progress } = useAnalysisOverview(analysisId);
 
   if (loading) {
+    let msg = "Loading analysis overview...";
+    if (progress && progress.status === "analyzing") {
+      msg = `Analyzing repository... (Section ${progress.chunksProcessed} of ${progress.totalChunks} parsed`;
+      if (progress.estimatedSecondsRemaining > 0) {
+        msg += `, ~${progress.estimatedSecondsRemaining}s remaining`;
+      }
+      msg += ")";
+    } else {
+      msg =
+        "Analyzing repository... (This may take 20-30 seconds for larger repos)";
+    }
+
     return (
-      <div className="p-8 text-neon-teal text-sm">
-        Loading analysis overview…
+      <div className="flex h-screen items-center justify-center p-8 bg-[#0b1020]">
+        <LoadingSpinner
+          message={msg}
+          className="flex items-center space-x-4 text-neon-teal"
+        />
       </div>
     );
   }
@@ -41,12 +57,8 @@ export default function AnalysisOverviewPage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-12"
       >
-        <h1 className="text-4xl font-bold text-white">
-          {data.repoName}
-        </h1>
-        <p className="text-foreground/60 mt-2">
-          Repository Analysis Overview
-        </p>
+        <h1 className="text-4xl font-bold text-white">{data.repoName}</h1>
+        <p className="text-foreground/60 mt-2">Repository Analysis Overview</p>
       </motion.div>
 
       {/* STATS */}
@@ -54,25 +66,19 @@ export default function AnalysisOverviewPage() {
         <Card className="p-6 bg-white/5 border-white/10">
           <GitBranch className="h-5 w-5 text-neon-teal mb-2" />
           <p className="text-sm text-foreground/60">Status</p>
-          <p className="text-xl font-bold text-white">
-            {data.status}
-          </p>
+          <p className="text-xl font-bold text-white">{data.status}</p>
         </Card>
 
         <Card className="p-6 bg-white/5 border-white/10">
           <Activity className="h-5 w-5 text-secondary mb-2" />
           <p className="text-sm text-foreground/60">Commits</p>
-          <p className="text-xl font-bold text-white">
-            {data.commits}
-          </p>
+          <p className="text-xl font-bold text-white">{data.commits}</p>
         </Card>
 
         <Card className="p-6 bg-white/5 border-white/10">
           <FileText className="h-5 w-5 text-neon-teal mb-2" />
           <p className="text-sm text-foreground/60">Files</p>
-          <p className="text-xl font-bold text-white">
-            {data.files}
-          </p>
+          <p className="text-xl font-bold text-white">{data.files}</p>
         </Card>
 
         <Card className="p-6 bg-white/5 border-white/10">
@@ -88,9 +94,7 @@ export default function AnalysisOverviewPage() {
       <Card className="p-6 bg-white/5 border-white/10 mb-12">
         <div className="flex items-center gap-2 mb-4">
           <Layers className="text-neon-teal" />
-          <h3 className="text-xl font-bold text-white">
-            Languages Used
-          </h3>
+          <h3 className="text-xl font-bold text-white">Languages Used</h3>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -116,9 +120,7 @@ export default function AnalysisOverviewPage() {
           <Card
             key={item.path}
             className="p-6 bg-white/5 border-white/10 cursor-pointer hover:border-neon-teal/50 transition"
-            onClick={() =>
-              navigate(`/analysis/${analysisId}/${item.path}`)
-            }
+            onClick={() => navigate(`/analysis/${analysisId}/${item.path}`)}
           >
             <div className="flex justify-between items-center">
               <h4 className="font-bold text-white">{item.label}</h4>
