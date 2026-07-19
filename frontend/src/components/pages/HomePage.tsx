@@ -1,4 +1,4 @@
-// HPI 1.5-V
+// HPI 1.5-V — Modern Developer Tool Redesign
 import React, { useEffect, useState, useRef } from "react";
 import { motion, useScroll, useSpring } from "framer-motion";
 import {
@@ -24,13 +24,12 @@ import { Image } from "@/components/ui/image";
 import AnalyzeRepositoryModal from "./AnalyzeRepositoryModal";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import AnimatedHeroGlow from "../ui/AnimatedHeroGlow";
+import InteractiveHeroBackground from "../ui/InteractiveHeroBackground";
 import { Repository } from "../../types/repository";
 import { useMember } from "@/context/AuthContext";
 import apiClient from "@/lib/apiClient";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://codelens-platform.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /* ---------- TYPES ---------- */
 type StatItem = {
@@ -40,13 +39,6 @@ type StatItem = {
   color: string;
   trend?: string;
 };
-
-/* ---------- UTILS ---------- */
-const GridBackground = () => (
-  <div className="absolute inset-0 pointer-events-none">
-    <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-  </div>
-);
 
 /* ---------- MAIN ---------- */
 export default function HomePage() {
@@ -232,61 +224,78 @@ export default function HomePage() {
   function getStatusColor(status: string) {
     switch (status) {
       case "completed":
-        return "border-green-500/50 text-green-400 bg-green-500/10";
+        return "border-cl-success/50 text-cl-success bg-cl-success/10";
       case "running":
       case "analyzing":
       case "processing":
-        return "border-neon-teal/50 text-neon-teal bg-neon-teal/10";
+        return "border-cl-accent/50 text-cl-accent bg-cl-accent/10";
       case "failed":
-        return "border-red-500/50 text-red-400 bg-red-500/10";
+        return "border-cl-error/50 text-cl-error bg-cl-error/10";
       case "pending":
         return "border-yellow-500/50 text-yellow-400 bg-yellow-500/10";
       default:
-        return "border-foreground/30 text-foreground/60 bg-foreground/5";
+        return "border-cl-border text-cl-muted bg-cl-surface";
     }
   }
 
   /* ---------- RENDER ---------- */
   return (
-    <div className="relative min-h-screen bg-black text-white overflow-hidden">
+    <div className="relative min-h-screen bg-cl-bg text-cl-text overflow-hidden">
       {/* Scroll progress indicator */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-neon-teal z-50 origin-left"
+        className="fixed top-0 left-0 right-0 h-[2px] bg-cl-accent z-50 origin-left"
         style={{ scaleX }}
       />
 
       <main className="relative z-10 w-full">
         {/* ── HERO ─────────────────────────────────────────────────────── */}
         <section className="relative min-h-screen flex items-center pt-24">
-          <GridBackground />
-          <AnimatedHeroGlow />
+          <InteractiveHeroBackground />
 
-          <div className="w-full px-10 md:px-16 lg:px-24">
-            <div className="max-w-[1200px]">
-              <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight">
-                UNLEASH YOUR <br />
-                <span className="text-neon-teal">CODE POTENTIAL</span>
-              </h1>
+          <div className="w-full px-6 sm:px-10 md:px-16 lg:px-24">
+            <div className="max-w-[800px]">
+              <motion.h1
+                className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tight"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                See what your code <br className="hidden sm:block" />
+                <span className="text-cl-accent">actually says</span> about you.
+              </motion.h1>
 
-              <p className="max-w-xl text-white/60 mb-10 text-lg">
-                AI-powered code review &amp; developer skill profiling platform.
-              </p>
+              <motion.p
+                className="max-w-xl text-cl-muted mb-10 text-base sm:text-lg leading-relaxed"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
+                Analyze any repo. Get real quality scores, security flags, and a
+                skill breakdown backed by evidence — not guesses.
+              </motion.p>
 
-              <div className="flex flex-wrap gap-4">
+              <motion.div
+                className="flex flex-wrap gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
                 <button
+                  id="cta-analyze-repo"
                   onClick={() => requireLogin(() => setOpenModal(true))}
-                  className="px-8 py-4 bg-neon-teal text-black font-bold rounded-lg hover:bg-neon-teal/90 transition"
+                  className="px-7 py-3.5 bg-cl-accent text-white font-semibold rounded-lg hover:bg-cl-accent-hover transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cl-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cl-bg"
                 >
-                  Initialize Analysis
+                  Analyze a Repo
                 </button>
 
                 <button
+                  id="cta-add-repository"
                   onClick={() => requireLogin(() => setOpenModal(true))}
-                  className="px-8 py-4 border border-white/20 rounded-lg hover:bg-white/5 transition"
+                  className="px-7 py-3.5 border border-cl-border rounded-lg text-cl-text hover:bg-cl-surface hover:border-cl-accent/40 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cl-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cl-bg"
                 >
                   Add Repository
                 </button>
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>
@@ -299,22 +308,24 @@ export default function HomePage() {
         />
 
         {startingAnalysis && (
-          <div className="fixed bottom-10 right-10 bg-neon-teal text-black px-6 py-3 rounded-lg font-semibold shadow-lg animate-pulse">
-            Initializing analysis pipeline...
+          <div className="fixed bottom-10 right-10 bg-cl-accent text-white px-6 py-3 rounded-lg font-semibold shadow-lg shadow-cl-accent/20 animate-pulse">
+            Starting analysis pipeline…
           </div>
         )}
 
         {/* ── REPOSITORIES ─────────────────────────────────────────────── */}
         {member && (
-          <section className="px-10 md:px-16 lg:px-24 pb-32">
-            <h2 className="text-3xl font-bold mb-10">Your Repositories</h2>
+          <section className="px-6 sm:px-10 md:px-16 lg:px-24 pb-32">
+            <h2 className="font-heading text-2xl sm:text-3xl font-semibold mb-10 text-cl-text">
+              Your Repositories
+            </h2>
 
             {loading ? (
               <div className="h-96 flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-neon-teal border-t-transparent rounded-full animate-spin" />
+                <div className="w-10 h-10 border-2 border-cl-accent border-t-transparent rounded-full animate-spin" />
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {repositories.map((repo) => {
                   const isAnalyzing = analyzingRepos.has(repo.id);
                   const analysisId = repo.analysis?.id;
@@ -334,7 +345,7 @@ export default function HomePage() {
                   return (
                     <Card
                       key={repo.id}
-                      className="cursor-pointer border-white/10 bg-[#111] hover:border-neon-teal/50 transition-all duration-300 overflow-hidden"
+                      className="cursor-pointer border-cl-border bg-cl-surface hover:border-cl-accent/50 transition-all duration-200 overflow-hidden group"
                       onClick={() => {
                         if (!member) {
                           alert("Please login to view analysis");
@@ -360,15 +371,15 @@ export default function HomePage() {
                       }}
                     >
                       {/* ── CARD HEADER ────────────────────────────────── */}
-                      <div className="p-6 border-b border-white/5 bg-white/[0.02]">
+                      <div className="p-5 border-b border-cl-border/50 bg-cl-surface">
                         {/* Top row: branch icon | status badge + Re-analyze btn */}
-                        <div className="flex justify-between items-center mb-4">
-                          <GitBranch className="text-neon-teal shrink-0" />
+                        <div className="flex justify-between items-center mb-3">
+                          <GitBranch className="text-cl-accent h-4 w-4 shrink-0" />
 
                           <div className="flex items-center gap-2">
                             {/* Status badge — pulses while analyzing */}
                             <span
-                              className={`text-xs px-2 py-1 border rounded flex items-center gap-1.5 ${getStatusColor(
+                              className={`text-xs font-mono px-2 py-1 border rounded-md flex items-center gap-1.5 ${getStatusColor(
                                 displayStatus,
                               )}`}
                             >
@@ -377,7 +388,7 @@ export default function HomePage() {
                               )}
                               {displayStatus}
                               {progressLabel && (
-                                <span className="text-[10px] opacity-60">
+                                <span className="text-[10px] opacity-60 font-mono-data">
                                   ({progressLabel})
                                 </span>
                               )}
@@ -398,8 +409,8 @@ export default function HomePage() {
                                 transition-all duration-200 shrink-0
                                 ${
                                   isAnalyzing
-                                    ? "border-white/10 text-white/20 cursor-not-allowed"
-                                    : "border-white/15 text-white/40 hover:border-neon-teal/60 hover:text-neon-teal hover:bg-neon-teal/5 active:scale-95"
+                                    ? "border-cl-border text-cl-muted/40 cursor-not-allowed"
+                                    : "border-cl-border text-cl-muted hover:border-cl-accent/60 hover:text-cl-accent hover:bg-cl-accent/5 active:scale-95"
                                 }
                               `}
                             >
@@ -412,17 +423,17 @@ export default function HomePage() {
                           </div>
                         </div>
 
-                        <h3 className="text-xl font-bold">
+                        <h3 className="font-heading text-lg font-semibold text-cl-text group-hover:text-white transition-colors">
                           {repo.repositoryName}
                         </h3>
 
-                        <p className="text-xs text-white/50 mt-1">
+                        <p className="text-xs text-cl-muted mt-1">
                           {repo.owner || "Unknown"}
                         </p>
                       </div>
 
                       {/* ── CARD FOOTER ────────────────────────────────── */}
-                      <div className="p-6 text-sm text-white/60">
+                      <div className="p-5 text-sm text-cl-muted">
                         {isAnalyzing
                           ? progress
                             ? `Re-analyzing… (section ${progress.chunksProcessed} of ${progress.totalChunks} parsed)`
@@ -439,8 +450,8 @@ export default function HomePage() {
           </section>
         )}
 
-        <footer className="py-12 text-center text-xs text-white/30">
-          © 2026 CodeLens AI — SYSTEM OPERATIONAL
+        <footer className="py-12 text-center text-xs text-cl-muted/50">
+          © 2026 CodeLens AI
         </footer>
       </main>
     </div>

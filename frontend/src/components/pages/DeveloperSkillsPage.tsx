@@ -12,6 +12,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Label,
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -47,7 +48,7 @@ export default function DeveloperSkillsPage() {
 
   if (loading || !data) {
     return (
-      <div className="p-8 text-neon-teal text-sm">
+      <div className="p-8 text-cl-accent text-sm">
         Loading developer skills profile…
       </div>
     );
@@ -115,27 +116,35 @@ export default function DeveloperSkillsPage() {
         lines: (data.languages.length - i) * 8000,
       })) || [];
 
+  // Overall skill score for visual hierarchy
+  const overallSkillScore = data?.developerProfile?.overallScore;
+
+  // Score color helper
+  function getScoreColor(score: number) {
+    if (score >= 75) return "text-cl-success";
+    if (score >= 50) return "text-amber-400";
+    return "text-cl-error";
+  }
+
   return (
-    <div className="w-full max-w-[120rem] mx-auto px-8 py-12">
+    <div className="w-full max-w-[120rem] mx-auto px-6 sm:px-8 py-12">
       {/* HEADER */}
       <motion.div
         className="mb-12"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-4xl font-bold text-white">
+        <h1 className="font-heading text-3xl sm:text-4xl font-semibold text-cl-text">
           Developer Skills Profile
         </h1>
-        <p className="mt-2 text-foreground/60">
+        <p className="mt-2 text-cl-muted">
           AI-assessed proficiency based on repository analysis
         </p>
       </motion.div>
 
-      {/* ── PERSISTENT SCORE DISCLAIMER BANNER ────────────────────────────
-           Small, always-visible, non-intrusive amber strip beneath the header.
-           Intentionally minimal: one line of plain text + icon. */}
+      {/* ── PERSISTENT SCORE DISCLAIMER BANNER ──────────────────────────── */}
       <div
-        className="mb-8 flex items-start gap-2.5 rounded-lg px-4 py-3 text-xs"
+        className="mb-8 flex items-start gap-2.5 rounded-card px-4 py-3 text-xs"
         style={{
           background: "rgba(251, 191, 36, 0.06)",
           border: "1px solid rgba(251, 191, 36, 0.18)",
@@ -155,22 +164,30 @@ export default function DeveloperSkillsPage() {
       </div>
 
       {/* SUMMARY */}
-      <Card className="mb-12 border-white/10 bg-white/5 p-8">
-        <p className="text-sm text-foreground/60">AI Skill Summary</p>
-        <p className="mt-4 text-foreground/80 leading-relaxed">
+      <Card className="mb-12 border-cl-border bg-cl-surface p-6 sm:p-8">
+        <p className="text-sm text-cl-muted">AI Skill Summary</p>
+        <p className="mt-4 text-cl-text/80 leading-relaxed">
           {data.skillSummary}
         </p>
-        <p className="mt-4 text-neon-teal font-semibold">
+        <p className="mt-4 text-cl-accent font-semibold">
           Verdict: {data.overallVerdict}
         </p>
       </Card>
 
-      {/* TOP STATS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <StatCard
-          title="Overall Score"
-          value={`${data?.developerProfile?.overallScore}/100`}
-        />
+      {/* TOP STATS — Overall Score is primary/prominent */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+        {/* Primary metric — visually larger */}
+        <Card className="p-6 bg-cl-surface border-cl-accent/30 shadow-glow-accent col-span-2 lg:col-span-1">
+          <p className="text-xs text-cl-muted">Overall Score</p>
+          <p
+            className={`mt-2 text-4xl font-bold font-mono-data ${getScoreColor(
+              overallSkillScore || 0,
+            )}`}
+          >
+            {overallSkillScore}
+            <span className="text-lg text-cl-muted">/100</span>
+          </p>
+        </Card>
         <StatCard
           title="Applicable Domains"
           value={`${applicableCount} / ${FIXED_CATEGORIES.length}`}
@@ -179,52 +196,50 @@ export default function DeveloperSkillsPage() {
         <StatCard
           title="Growth Rate"
           value={`+${data?.developerProfile?.growthRate}%`}
+          isNumeric
         />
       </div>
 
       {/* ================= ROW 1 ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-16">
         {/* RADAR */}
         <div>
-          <Card className="border-white/10 bg-white/5 p-6">
-            <h3 className="mb-1 text-xl font-semibold text-white">
+          <Card className="border-cl-border bg-cl-surface p-5">
+            <h3 className="mb-1 font-heading text-lg font-semibold text-cl-text">
               Skills Overview
             </h3>
-            <p className="mb-6 text-xs text-foreground/40">
+            <p className="mb-6 text-xs text-cl-muted">
               Domain:{" "}
-              <span className="text-neon-teal">
+              <span className="text-cl-accent">
                 {data?.skillRadar?.domain ?? "—"}
               </span>
               &nbsp;·&nbsp; Greyed-out axes = not applicable to this codebase
             </p>
 
             {isLegacyRadar ? (
-              /* ── Legacy format fallback ─────────────────────────────────────
-                 Old analyses store skillRadar as { labels[], values[] }.
-                 The new fixed-category chart expects categories[].
-                 Show a friendly prompt instead of rendering stale data. */
+              /* ── Legacy format fallback ───────────────────────────────────── */
               <div className="h-[350px] flex flex-col items-center justify-center gap-5 text-center">
-                <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-2xl">
+                <div className="w-14 h-14 rounded-full bg-cl-surface border border-cl-border flex items-center justify-center text-2xl">
                   🔄
                 </div>
                 <div className="max-w-[280px]">
-                  <p className="text-white font-semibold text-base mb-1">
+                  <p className="text-cl-text font-semibold text-base mb-1 font-heading">
                     Updated skill breakdown available
                   </p>
-                  <p className="text-foreground/50 text-sm leading-relaxed">
+                  <p className="text-cl-muted text-sm leading-relaxed">
                     This analysis used the old skill format. Re-analyze to see
                     the new fixed-category breakdown (Backend, Frontend,
                     Database, DevOps/Infra, Testing, Security).
                   </p>
                 </div>
-                <div className="px-4 py-2 rounded-lg bg-neon-teal/10 border border-neon-teal/25 text-xs text-neon-teal">
+                <div className="px-4 py-2 rounded-card bg-cl-accent/10 border border-cl-accent/25 text-xs text-cl-accent">
                   Re-run analysis from the Overview page to update
                 </div>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={350}>
-                <RadarChart outerRadius={120} data={radarData}>
-                  <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                <RadarChart outerRadius={100} data={radarData}>
+                  <PolarGrid stroke="rgba(31, 33, 43, 0.8)" />
                   <PolarAngleAxis
                     dataKey="skill"
                     tick={({ x, y, payload }) => {
@@ -232,18 +247,30 @@ export default function DeveloperSkillsPage() {
                         (c) => c.name === payload.value,
                       );
                       const isNA = item?.score === null;
+
+                      const xNum = Number(x);
+                      const yNum = Number(y);
+
+                      // Offset labels outward to avoid overlap
+                      const cx = 0;
+                      const cy = 0;
+                      const dx = xNum - cx;
+                      const dy = yNum - cy;
+                      const dist = Math.sqrt(dx * dx + dy * dy);
+                      const offset = 14;
+                      const nx = dist > 0 ? xNum + (dx / dist) * offset : xNum;
+                      const ny = dist > 0 ? yNum + (dy / dist) * offset : yNum;
+
                       return (
                         <text
-                          x={x}
-                          y={y}
+                          x={nx}
+                          y={ny}
                           textAnchor="middle"
                           dominantBaseline="central"
-                          fill={
-                            isNA
-                              ? "rgba(255,255,255,0.25)"
-                              : "rgba(255,255,255,0.7)"
-                          }
-                          fontSize={12}
+                          fill={isNA ? "rgba(139, 141, 152, 0.4)" : "#E4E4E7"}
+                          fontSize={11}
+                          fontFamily="Inter Tight, Inter, sans-serif"
+                          fontWeight={500}
                         >
                           {payload.value}
                           {isNA ? " (N/A)" : ""}
@@ -253,14 +280,19 @@ export default function DeveloperSkillsPage() {
                   />
                   <PolarRadiusAxis
                     domain={[0, 100]}
-                    tick={{ fill: "#aaa" }}
+                    tick={{
+                      fill: "#8B8D98",
+                      fontSize: 9,
+                      fontFamily: "JetBrains Mono, monospace",
+                    }}
                     tickCount={5}
+                    axisLine={false}
                   />
                   <Radar
                     dataKey="level"
-                    stroke="#64FFDA"
-                    fill="#64FFDA"
-                    fillOpacity={0.35}
+                    stroke="#5E6AD2"
+                    fill="#5E6AD2"
+                    fillOpacity={0.25}
                     isAnimationActive
                   />
                 </RadarChart>
@@ -272,9 +304,9 @@ export default function DeveloperSkillsPage() {
           <ScoringMethodologyPanel methodology={scoringMethodology} />
         </div>
 
-        {/* LANGUAGE */}
-        <Card className="border-white/10 bg-white/5 p-5">
-          <h3 className="mb-6 text-xl font-semibold text-white">
+        {/* LANGUAGE — with axis label fix */}
+        <Card className="border-cl-border bg-cl-surface p-5">
+          <h3 className="mb-6 font-heading text-lg font-semibold text-cl-text">
             Language Proficiency
           </h3>
 
@@ -282,40 +314,63 @@ export default function DeveloperSkillsPage() {
             <BarChart
               data={languageData}
               layout="vertical"
-              margin={{ top: 10, right: 20, left: 80, bottom: 10 }}
+              margin={{ top: 10, right: 30, left: 80, bottom: 30 }}
             >
-              <CartesianGrid stroke="rgba(255,255,255,0.1)" />
+              <CartesianGrid stroke="rgba(31, 33, 43, 0.8)" />
               <XAxis
                 type="number"
-                tick={{ fill: "#aaa" }}
+                tick={{
+                  fill: "#8B8D98",
+                  fontSize: 10,
+                  fontFamily: "JetBrains Mono, monospace",
+                }}
                 axisLine={false}
                 tickLine={false}
-              />
+              >
+                <Label
+                  value="Bytes of code"
+                  position="insideBottom"
+                  offset={-15}
+                  style={{
+                    fill: "#8B8D98",
+                    fontSize: 11,
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                />
+              </XAxis>
               <YAxis
                 type="category"
                 dataKey="language"
-                tick={{ fill: "#aaa" }}
+                tick={{
+                  fill: "#E4E4E7",
+                  fontSize: 11,
+                  fontFamily: "Inter Tight, Inter, sans-serif",
+                }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#111",
-                  border: "1px solid #333",
+                  backgroundColor: "#111318",
+                  border: "1px solid #1F212B",
+                  borderRadius: "8px",
+                  color: "#E4E4E7",
+                  fontFamily: "JetBrains Mono, monospace",
+                  fontSize: "12px",
                 }}
               />
-              <Bar dataKey="lines" fill="#BB86FC" />
+              <Bar dataKey="lines" fill="#5E6AD2" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
       </div>
 
       {/* DETAILED SKILLS */}
-      <Card className="border-white/10 bg-white/5 p-8 mb-16">
-        <h3 className="mb-2 text-xl font-semibold text-white">
+      <Card className="border-cl-border bg-cl-surface p-6 sm:p-8 mb-16">
+        <h3 className="mb-2 font-heading text-lg font-semibold text-cl-text">
           Detailed Skills Assessment
         </h3>
-        <p className="mb-8 text-xs text-foreground/40">
+        <p className="mb-8 text-xs text-cl-muted">
           Scores are 0–100 · "N/A" means the category is not present in this
           codebase (not a low score)
         </p>
@@ -328,42 +383,46 @@ export default function DeveloperSkillsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <h4
-                      className={`font-medium ${
-                        isNA ? "text-foreground/30" : "text-white"
+                      className={`font-medium text-sm ${
+                        isNA ? "text-cl-muted/40" : "text-cl-text"
                       }`}
                     >
                       {cat.name}
                     </h4>
                     {isNA && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 text-foreground/30 border border-white/10">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cl-surface text-cl-muted/40 border border-cl-border">
                         N/A
                       </span>
                     )}
                   </div>
                   {isNA ? (
-                    <span className="text-xs text-foreground/25 italic">
+                    <span className="text-xs text-cl-muted/30 italic">
                       Not applicable
                     </span>
                   ) : (
-                    <span className="text-neon-teal font-bold">
+                    <span
+                      className={`font-bold font-mono-data ${getScoreColor(
+                        cat.score!,
+                      )}`}
+                    >
                       {cat.score}%
                     </span>
                   )}
                 </div>
 
                 {isNA ? (
-                  <div className="mt-2 h-2 rounded-full bg-white/5 border border-white/5" />
+                  <div className="mt-2 h-1.5 rounded-full bg-cl-border/50" />
                 ) : (
                   <Progress
                     value={cat.score ?? 0}
-                    className="mt-2 h-2 bg-white/10"
+                    className="mt-2 h-1.5 bg-cl-border"
                   />
                 )}
 
                 {cat.reason && (
                   <p
                     className={`mt-1 text-xs leading-relaxed ${
-                      isNA ? "text-foreground/25 italic" : "text-foreground/50"
+                      isNA ? "text-cl-muted/30 italic" : "text-cl-muted"
                     }`}
                   >
                     {cat.reason}
@@ -377,22 +436,24 @@ export default function DeveloperSkillsPage() {
 
       {/* ACHIEVEMENTS */}
       {achievements.length > 0 && (
-        <Card className="mb-16 border-white/10 bg-white/5 p-8">
-          <h3 className="mb-8 text-xl font-semibold text-white">
+        <Card className="mb-16 border-cl-border bg-cl-surface p-6 sm:p-8">
+          <h3 className="mb-8 font-heading text-lg font-semibold text-cl-text">
             Achievements
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
             {achievements.map((a: any, i: number) => (
               <div
                 key={i}
-                className="p-6 rounded-xl bg-white/5 border border-white/10"
+                className="p-5 rounded-card bg-cl-bg border border-cl-border hover:border-cl-success/30 transition-colors"
               >
-                <div className="h-10 w-10 mb-4 flex items-center justify-center rounded-lg bg-neon-teal/10 text-neon-teal">
+                <div className="h-9 w-9 mb-3 flex items-center justify-center rounded-md bg-cl-success/10 text-cl-success">
                   🏆
                 </div>
-                <h4 className="text-white font-semibold">{a.title}</h4>
-                <p className="mt-2 text-sm text-foreground/60">
+                <h4 className="text-cl-text font-semibold text-sm">
+                  {a.title}
+                </h4>
+                <p className="mt-2 text-xs text-cl-muted leading-relaxed">
                   {a.description}
                 </p>
               </div>
@@ -403,19 +464,19 @@ export default function DeveloperSkillsPage() {
 
       {/* GROWTH RECOMMENDATIONS */}
       {growth.length > 0 && (
-        <Card className="border border-neon-teal/30 bg-white/5 p-8">
-          <h3 className="mb-6 text-xl font-semibold text-white">
+        <Card className="border border-cl-accent/30 bg-cl-surface p-6 sm:p-8">
+          <h3 className="mb-6 font-heading text-lg font-semibold text-cl-text">
             Growth Recommendations
           </h3>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {growth.map((g: any, i: number) => (
               <div
                 key={i}
-                className="p-5 rounded-lg bg-white/5 border border-white/10"
+                className="p-4 rounded-card bg-cl-bg border border-cl-border"
               >
-                <p className="text-white font-medium">{g.title}</p>
-                <p className="mt-1 text-sm text-foreground/60">{g.action}</p>
+                <p className="text-cl-text font-medium text-sm">{g.title}</p>
+                <p className="mt-1 text-xs text-cl-muted">{g.action}</p>
               </div>
             ))}
           </div>
@@ -427,11 +488,25 @@ export default function DeveloperSkillsPage() {
 
 /* ---------------- SMALL COMPONENT ---------------- */
 
-function StatCard({ title, value }: { title: string; value: any }) {
+function StatCard({
+  title,
+  value,
+  isNumeric,
+}: {
+  title: string;
+  value: any;
+  isNumeric?: boolean;
+}) {
   return (
-    <Card className="p-6 bg-white/5 border-white/10">
-      <p className="text-sm text-foreground/60">{title}</p>
-      <p className="mt-2 text-2xl font-bold text-white">{value}</p>
+    <Card className="p-5 bg-cl-surface border-cl-border">
+      <p className="text-xs text-cl-muted">{title}</p>
+      <p
+        className={`mt-2 text-xl font-bold text-cl-text ${
+          isNumeric ? "font-mono-data" : ""
+        }`}
+      >
+        {value}
+      </p>
     </Card>
   );
 }

@@ -32,10 +32,10 @@ export default function AnalysisOverviewPage() {
     }
 
     return (
-      <div className="flex h-screen items-center justify-center p-8 bg-[#0b1020]">
+      <div className="flex h-screen items-center justify-center p-8 bg-cl-bg">
         <LoadingSpinner
           message={msg}
-          className="flex items-center space-x-4 text-neon-teal"
+          className="flex items-center space-x-4 text-cl-accent"
         />
       </div>
     );
@@ -43,65 +43,73 @@ export default function AnalysisOverviewPage() {
 
   if (!data) {
     return (
-      <div className="p-8 text-destructive">
-        Failed to load analysis overview
-      </div>
+      <div className="p-8 text-cl-error">Failed to load analysis overview</div>
     );
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto px-8 py-12">
+    <div className="max-w-[1400px] mx-auto px-6 sm:px-8 py-12">
       {/* HEADER */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-12"
       >
-        <h1 className="text-4xl font-bold text-white">{data.repoName}</h1>
-        <p className="text-foreground/60 mt-2">Repository Analysis Overview</p>
+        <h1 className="font-heading text-3xl sm:text-4xl font-semibold text-cl-text">
+          {data.repoName}
+        </h1>
+        <p className="text-cl-muted mt-2">Repository Analysis Overview</p>
       </motion.div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-        <Card className="p-6 bg-white/5 border-white/10">
-          <GitBranch className="h-5 w-5 text-neon-teal mb-2" />
-          <p className="text-sm text-foreground/60">Status</p>
-          <p className="text-xl font-bold text-white">{data.status}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 mb-12">
+        <Card className="p-5 bg-cl-surface border-cl-border">
+          <GitBranch className="h-4 w-4 text-cl-accent mb-2" />
+          <p className="text-xs text-cl-muted">Status</p>
+          <p className="text-lg font-semibold text-cl-text mt-1 font-heading">
+            {data.status}
+          </p>
         </Card>
 
-        <Card className="p-6 bg-white/5 border-white/10">
-          <Activity className="h-5 w-5 text-secondary mb-2" />
-          <p className="text-sm text-foreground/60">Commits</p>
-          <p className="text-xl font-bold text-white">{data.commits}</p>
+        <Card className="p-5 bg-cl-surface border-cl-border">
+          <Activity className="h-4 w-4 text-cl-accent mb-2" />
+          <p className="text-xs text-cl-muted">Commits</p>
+          <p className="text-lg font-semibold text-cl-text mt-1 font-mono-data">
+            {data.commits}
+          </p>
         </Card>
 
-        <Card className="p-6 bg-white/5 border-white/10">
-          <FileText className="h-5 w-5 text-neon-teal mb-2" />
-          <p className="text-sm text-foreground/60">Files</p>
-          <p className="text-xl font-bold text-white">{data.files}</p>
+        <Card className="p-5 bg-cl-surface border-cl-border">
+          <FileText className="h-4 w-4 text-cl-accent mb-2" />
+          <p className="text-xs text-cl-muted">Files</p>
+          <p className="text-lg font-semibold text-cl-text mt-1 font-mono-data">
+            {data.files}
+          </p>
         </Card>
 
-        <Card className="p-6 bg-white/5 border-white/10">
-          <Clock className="h-5 w-5 text-secondary mb-2" />
-          <p className="text-sm text-foreground/60">Analyzed At</p>
-          <p className="text-sm font-bold text-white">
+        <Card className="p-5 bg-cl-surface border-cl-border">
+          <Clock className="h-4 w-4 text-cl-muted mb-2" />
+          <p className="text-xs text-cl-muted">Analyzed At</p>
+          <p className="text-sm font-semibold text-cl-text mt-1">
             {new Date(data.analyzedAt).toLocaleString()}
           </p>
         </Card>
       </div>
 
       {/* LANGUAGES */}
-      <Card className="p-6 bg-white/5 border-white/10 mb-12">
+      <Card className="p-5 bg-cl-surface border-cl-border mb-12">
         <div className="flex items-center gap-2 mb-4">
-          <Layers className="text-neon-teal" />
-          <h3 className="text-xl font-bold text-white">Languages Used</h3>
+          <Layers className="text-cl-accent h-4 w-4" />
+          <h3 className="font-heading text-lg font-semibold text-cl-text">
+            Languages Used
+          </h3>
         </div>
 
         <div className="flex flex-wrap gap-2">
           {data.languages?.map((lang: string) => (
             <span
               key={lang}
-              className="px-3 py-1 rounded-full bg-neon-teal/10 text-neon-teal text-xs border border-neon-teal/30"
+              className="px-3 py-1 rounded-md bg-cl-accent/10 text-cl-accent text-xs font-medium border border-cl-accent/20"
             >
               {lang}
             </span>
@@ -110,7 +118,7 @@ export default function AnalysisOverviewPage() {
       </Card>
 
       {/* NAVIGATION */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
         {[
           { label: "Code Quality", path: "code-quality" },
           { label: "AI Review", path: "ai-review" },
@@ -119,12 +127,14 @@ export default function AnalysisOverviewPage() {
         ].map((item) => (
           <Card
             key={item.path}
-            className="p-6 bg-white/5 border-white/10 cursor-pointer hover:border-neon-teal/50 transition"
+            className="p-5 bg-cl-surface border-cl-border cursor-pointer hover:border-cl-accent/50 hover:shadow-glow-accent transition-all duration-200 group"
             onClick={() => navigate(`/analysis/${analysisId}/${item.path}`)}
           >
             <div className="flex justify-between items-center">
-              <h4 className="font-bold text-white">{item.label}</h4>
-              <ArrowRight className="text-neon-teal" />
+              <h4 className="font-heading font-semibold text-cl-text group-hover:text-white transition-colors">
+                {item.label}
+              </h4>
+              <ArrowRight className="text-cl-accent h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </Card>
         ))}

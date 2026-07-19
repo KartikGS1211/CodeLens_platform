@@ -92,16 +92,18 @@ export default function CodeReviewPage() {
     return groups;
   }, [filtered]);
 
-  const criticalCount = normalizedIssues.filter((i) => i.severity === "high").length;
+  const criticalCount = normalizedIssues.filter(
+    (i) => i.severity === "high",
+  ).length;
 
   if (loading) {
     return (
-      <div className="p-10 text-neon-teal text-sm">Loading AI Review...</div>
+      <div className="p-10 text-cl-accent text-sm">Loading AI Review...</div>
     );
   }
 
   return (
-    <div className="w-full max-w-[120rem] mx-auto px-8 py-12">
+    <div className="w-full max-w-[120rem] mx-auto px-6 sm:px-8 py-12">
       {/* HEADER */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -109,42 +111,44 @@ export default function CodeReviewPage() {
         className="mb-12"
       >
         <div className="flex items-center gap-3">
-          <Sparkles className="h-7 w-7 text-neon-teal" />
-          <h1 className="text-4xl font-bold text-white">AI Code Review</h1>
+          <Sparkles className="h-6 w-6 text-cl-accent" />
+          <h1 className="font-heading text-3xl sm:text-4xl font-semibold text-cl-text">
+            AI Code Review
+          </h1>
         </div>
-        <p className="text-foreground/60 mt-3">
+        <p className="text-cl-muted mt-3">
           AI-generated insights based on your repository analysis
         </p>
       </motion.div>
 
       {/* SUMMARY */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-14">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 mb-14">
         <SummaryCard label="Total Findings" value={issues.length} />
         <SummaryCard
           label="Critical Issues"
           value={criticalCount}
-          highlight="text-red-400"
+          highlight="text-cl-error"
         />
         <SummaryCard
           label="Suggestions"
           value={reviewData?.review?.suggestions?.length ?? 0}
-          highlight="text-yellow-400"
+          highlight="text-amber-400"
         />
         <SummaryCard
           label="Strengths"
           value={reviewData?.review?.strengths?.length ?? 0}
-          highlight="text-green-400"
+          highlight="text-cl-success"
         />
       </div>
 
       {/* RED FLAGS */}
       {reviewData?.redFlags?.length > 0 && (
-        <Card className="mb-14 border-red-500/30 bg-red-500/5 p-6 rounded-2xl">
-          <h2 className="text-xl font-bold text-red-400 mb-4">
+        <Card className="mb-14 border-cl-error/30 bg-cl-error/5 p-5 rounded-card">
+          <h2 className="font-heading text-lg font-semibold text-cl-error mb-4">
             Critical Red Flags
           </h2>
           {reviewData.redFlags.map((flag: string, i: number) => (
-            <p key={i} className="text-sm text-foreground/70 mb-2">
+            <p key={i} className="text-sm text-cl-text/70 mb-2">
               • {flag}
             </p>
           ))}
@@ -153,7 +157,7 @@ export default function CodeReviewPage() {
 
       {/* TABS */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="bg-white/5 p-1 rounded-xl border border-white/10">
+        <TabsList className="bg-cl-surface p-1 rounded-card border border-cl-border">
           <TabsTrigger value="all">All ({normalizedIssues.length})</TabsTrigger>
           <TabsTrigger value="suggestions">
             Suggestions(
@@ -161,18 +165,18 @@ export default function CodeReviewPage() {
             )
           </TabsTrigger>
           <TabsTrigger value="security">
-            Security  (
+            Security (
             {normalizedIssues.filter((i) => i.category === "security").length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value={selectedTab} className="mt-10 space-y-12">
           {Object.entries(groupedByFile).map(([file, fileIssues]) => (
-            <div key={file} className="space-y-6">
+            <div key={file} className="space-y-4">
               {/* FILE HEADER */}
               <div className="flex items-center gap-3">
-                <FileText size={16} className="text-neon-teal" />
-                <span className="text-xs tracking-wider uppercase text-neon-teal">
+                <FileText size={14} className="text-cl-accent" />
+                <span className="text-xs tracking-wider uppercase text-cl-accent font-mono">
                   {file}
                 </span>
               </div>
@@ -182,10 +186,10 @@ export default function CodeReviewPage() {
 
                 const severityColor =
                   item.severity === "high"
-                    ? "border-l-red-500"
+                    ? "border-l-cl-error"
                     : item.severity === "medium"
-                    ? "border-l-yellow-400"
-                    : "border-l-emerald-400";
+                    ? "border-l-amber-400"
+                    : "border-l-cl-success";
 
                 return (
                   <motion.div
@@ -194,34 +198,40 @@ export default function CodeReviewPage() {
                     animate={{ opacity: 1, y: 0 }}
                   >
                     <Card
-                      className={`relative p-7 bg-gradient-to-br from-[#111] to-[#0f172a] border border-white/10 rounded-2xl shadow-xl border-l-4 ${severityColor}`}
+                      className={`relative p-6 bg-cl-surface border border-cl-border rounded-card border-l-4 ${severityColor}`}
                     >
-                      <span className="absolute top-5 right-5 text-xs px-3 py-1 rounded-full bg-black/40 border border-white/10">
+                      <span className="absolute top-4 right-4 text-xs px-2.5 py-1 rounded-md bg-cl-bg border border-cl-border font-mono-data">
                         {item.severity.toUpperCase()}
                       </span>
 
-                      <h3 className="text-xl font-semibold text-white">
+                      <h3 className="font-heading text-base font-semibold text-cl-text pr-20">
                         {item.title}
                       </h3>
 
                       {item.description && (
-                        <p className="text-sm text-foreground/60 mt-3 leading-relaxed">
+                        <p className="text-sm text-cl-muted mt-3 leading-relaxed">
                           {item.description}
                         </p>
                       )}
 
-                      <div className="flex items-center gap-4 text-xs text-foreground/40 mt-4">
-                        {item.line && <span>Line {item.line}</span>}
+                      <div className="flex items-center gap-4 text-xs text-cl-muted/60 mt-3">
+                        {item.line && (
+                          <span className="font-mono-data">
+                            Line {item.line}
+                          </span>
+                        )}
                         {item.confidence && (
-                          <span>Confidence: {item.confidence}%</span>
+                          <span className="font-mono-data">
+                            Confidence: {item.confidence}%
+                          </span>
                         )}
                       </div>
 
                       {item.impactScore && (
                         <div className="mt-4">
-                          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div className="w-full h-1.5 bg-cl-border rounded-full overflow-hidden">
                             <div
-                              className="h-2 bg-red-500 rounded-full"
+                              className="h-1.5 bg-cl-error rounded-full"
                               style={{
                                 width: `${item.impactScore}%`,
                               }}
@@ -232,24 +242,24 @@ export default function CodeReviewPage() {
 
                       {/* CODE */}
                       {item.currentCode && (
-                        <div className="mt-6">
+                        <div className="mt-5">
                           <button
                             onClick={() => setExpanded(isOpen ? null : item.id)}
-                            className="text-xs text-neon-teal hover:underline"
+                            className="text-xs text-cl-accent hover:underline focus-visible:ring-2 focus-visible:ring-cl-accent rounded"
                           >
                             {isOpen ? "Hide Code" : "View Code Example"}
                           </button>
 
                           {isOpen && (
-                            <div className="mt-4 rounded-xl bg-black/50 border border-white/10 p-5 text-xs font-mono whitespace-pre-wrap">
-                              <div className="text-red-400 mb-2">
+                            <div className="mt-4 rounded-card bg-cl-bg border border-cl-border p-4 text-xs font-mono whitespace-pre-wrap">
+                              <div className="text-cl-error mb-2">
                                 // Current
                               </div>
                               {item.currentCode}
 
                               {item.suggestedCode && (
                                 <>
-                                  <div className="text-emerald-400 mt-5 mb-2">
+                                  <div className="text-cl-success mt-5 mb-2">
                                     // Suggested
                                   </div>
                                   {item.suggestedCode}
@@ -261,13 +271,13 @@ export default function CodeReviewPage() {
                       )}
 
                       {/* ACTIONS */}
-                      <div className="flex gap-3 mt-6">
+                      <div className="flex gap-3 mt-5">
                         {item.fixType && !item.isFixed && (
-                          <button className="px-5 py-2 text-sm rounded-xl bg-neon-teal text-black font-semibold hover:scale-105 transition">
+                          <button className="px-4 py-2 text-sm rounded-card bg-cl-accent text-white font-semibold hover:bg-cl-accent-hover transition focus-visible:ring-2 focus-visible:ring-cl-accent">
                             Apply Fix
                           </button>
                         )}
-                        <button className="px-5 py-2 text-sm rounded-xl border border-white/20 text-white/70 hover:bg-white/5 transition">
+                        <button className="px-4 py-2 text-sm rounded-card border border-cl-border text-cl-muted hover:bg-cl-surface hover:text-cl-text transition focus-visible:ring-2 focus-visible:ring-cl-accent">
                           Ignore
                         </button>
                       </div>
@@ -281,25 +291,25 @@ export default function CodeReviewPage() {
       </Tabs>
 
       {/* AI INSIGHTS */}
-      <Card className="mt-20 p-8 bg-gradient-to-r from-[#0f172a] to-[#111] border border-neon-teal/20 rounded-2xl">
-        <h2 className="text-xl font-bold text-white mb-6">
+      <Card className="mt-20 p-6 sm:p-8 bg-cl-surface border border-cl-accent/20 rounded-card">
+        <h2 className="font-heading text-lg font-semibold text-cl-text mb-6">
           AI-Powered Insights
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-8 text-sm text-foreground/70">
+        <div className="grid sm:grid-cols-3 gap-8 text-sm text-cl-muted">
           <InsightBlock
             title="Strengths"
-            color="text-green-400"
+            color="text-cl-success"
             items={reviewData?.review?.strengths ?? []}
           />
           <InsightBlock
             title="Weaknesses"
-            color="text-red-400"
+            color="text-cl-error"
             items={reviewData?.review?.weaknesses ?? []}
           />
           <InsightBlock
             title="Suggestions"
-            color="text-yellow-400"
+            color="text-amber-400"
             items={reviewData?.review?.suggestions ?? []}
           />
         </div>
@@ -320,9 +330,13 @@ function SummaryCard({
   highlight?: string;
 }) {
   return (
-    <Card className="p-6 bg-white/5 border-white/10 rounded-2xl">
-      <p className="text-sm text-foreground/60">{label}</p>
-      <p className={`text-3xl font-bold mt-3 ${highlight || "text-white"}`}>
+    <Card className="p-5 bg-cl-surface border-cl-border rounded-card">
+      <p className="text-xs text-cl-muted">{label}</p>
+      <p
+        className={`text-2xl font-bold mt-3 font-mono-data ${
+          highlight || "text-cl-text"
+        }`}
+      >
         {value}
       </p>
     </Card>
@@ -340,9 +354,11 @@ function InsightBlock({
 }) {
   return (
     <div>
-      <h3 className={`font-semibold mb-3 ${color}`}>{title}</h3>
+      <h3 className={`font-heading font-semibold mb-3 ${color}`}>{title}</h3>
       {items.map((item, i) => (
-        <p key={i}>• {item}</p>
+        <p key={i} className="mb-1">
+          • {item}
+        </p>
       ))}
     </div>
   );

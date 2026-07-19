@@ -1,57 +1,51 @@
-"use client"
+"use client";
 
-import { X, Github } from "lucide-react"
-
-import { motion, AnimatePresence } from "framer-motion"
-import { useState } from "react"
-
+import { X, Github } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 
 interface Props {
-  open: boolean
-  onClose: () => void
-  onAnalyze: (url: string) => void
+  open: boolean;
+  onClose: () => void;
+  onAnalyze: (url: string) => void;
 }
-
 
 export default function AnalyzeRepositoryModal({
   open,
   onClose,
   onAnalyze,
 }: Props) {
-  const [repoUrl, setRepoUrl] = useState("")
+  const [repoUrl, setRepoUrl] = useState("");
 
-  const examples = [
-    "https://github.com/facebook/react",
-    
-  ]
+  const examples = ["https://github.com/facebook/react"];
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            initial={{ scale: 0.9, y: 30 }}
+            initial={{ scale: 0.95, y: 15 }}
             animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 30 }}
-            transition={{ duration: 0.3 }}
-            className="relative w-full max-w-xl bg-[#0b1020] border border-white/10 rounded-xl p-6"
+            exit={{ scale: 0.95, y: 15 }}
+            transition={{ duration: 0.2 }}
+            className="relative w-full max-w-lg bg-cl-surface border border-cl-border rounded-card p-6 shadow-2xl"
           >
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-neon-teal/20 border border-neon-teal">
-                  <Github className="w-5 h-5 text-neon-teal" />
+                <div className="p-2 rounded-md bg-cl-accent/10 border border-cl-accent/25">
+                  <Github className="w-5 h-5 text-cl-accent" />
                 </div>
                 <div>
-                  <h2 className="font-heading text-xl text-white">
+                  <h2 className="font-heading text-lg font-semibold text-cl-text">
                     Analyze Repository
                   </h2>
-                  <p className="text-xs text-foreground/60">
+                  <p className="text-xs text-cl-muted mt-0.5">
                     Enter a GitHub repository URL
                   </p>
                 </div>
@@ -59,34 +53,34 @@ export default function AnalyzeRepositoryModal({
 
               <button
                 onClick={onClose}
-                className="text-white/40 hover:text-white"
+                className="text-cl-muted hover:text-cl-text transition-colors p-1"
               >
-                <X />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Input */}
             <div className="mb-6">
-              <label className="text-xs text-foreground/60 block mb-2">
+              <label className="text-xs text-cl-muted block mb-2 font-medium">
                 Repository URL
               </label>
               <input
                 value={repoUrl}
                 onChange={(e) => setRepoUrl(e.target.value)}
                 placeholder="https://github.com/username/repository"
-                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-neon-teal"
+                className="w-full bg-cl-bg border border-cl-border rounded-md px-3.5 py-2.5 text-sm text-cl-text placeholder-cl-muted/50 focus:outline-none focus:border-cl-accent focus:ring-1 focus:ring-cl-accent transition-all font-sans"
               />
             </div>
 
             {/* Examples */}
             <div className="mb-6">
-              <p className="text-xs text-foreground/60 mb-2">Examples</p>
+              <p className="text-xs text-cl-muted mb-2 font-medium">Examples</p>
               <div className="space-y-2">
                 {examples.map((ex) => (
                   <button
                     key={ex}
                     onClick={() => setRepoUrl(ex)}
-                    className="w-full text-left text-xs text-neon-teal bg-white/5 border border-white/10 rounded-lg px-3 py-2 hover:bg-neon-teal/10"
+                    className="w-full text-left text-xs text-cl-accent bg-cl-bg border border-cl-border rounded-md px-3 py-2.5 hover:bg-cl-accent/5 hover:border-cl-accent/30 transition-all font-mono"
                   >
                     {ex}
                   </button>
@@ -95,15 +89,15 @@ export default function AnalyzeRepositoryModal({
             </div>
 
             {/* What we analyze */}
-            <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">
-              <p className="text-xs text-neon-teal mb-2">
+            <div className="bg-cl-bg border border-cl-border rounded-md p-4 mb-6">
+              <p className="text-xs text-cl-accent font-semibold mb-2">
                 What we analyze:
               </p>
-              <ul className="text-xs text-foreground/70 space-y-1 list-disc pl-4">
-                <li>Code quality & maintainability</li>
+              <ul className="text-xs text-cl-muted space-y-1.5 list-disc pl-4 leading-relaxed">
+                <li>Code quality &amp; maintainability</li>
                 <li>Architecture patterns</li>
-                <li>Security & performance</li>
-                <li>Developer skill profiling</li>
+                <li>Security &amp; performance indicators</li>
+                <li>Developer skill profiling metrics</li>
               </ul>
             </div>
 
@@ -111,7 +105,7 @@ export default function AnalyzeRepositoryModal({
             <div className="flex justify-end gap-3">
               <button
                 onClick={onClose}
-                className="px-5 py-2 text-xs border border-white/20 text-white/60 hover:text-white"
+                className="px-4 py-2 text-xs border border-cl-border text-cl-muted rounded-md hover:bg-cl-bg hover:text-cl-text transition-all font-medium"
               >
                 Cancel
               </button>
@@ -119,14 +113,14 @@ export default function AnalyzeRepositoryModal({
               <button
                 onClick={() => onAnalyze(repoUrl)}
                 disabled={!repoUrl}
-                className="px-6 py-2 text-xs font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded disabled:opacity-40"
+                className="px-5 py-2 text-xs font-semibold bg-cl-accent hover:bg-cl-accent-hover text-white rounded-md disabled:opacity-40 transition-all"
               >
-                Analyze Repository
+                Analyze Repo
               </button>
             </div>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
-  )
+  );
 }

@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Code2, User, LogOut, Settings } from "lucide-react";
+import { Code2, User, LogOut, Settings, Menu } from "lucide-react";
 import { useMember } from "@/context/AuthContext";
 import {
   DropdownMenu,
@@ -28,21 +28,34 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur-lg">
-      <div className="mx-auto flex h-16 max-w-[120rem] items-center justify-between px-8">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-neon-teal to-secondary">
-            <Code2 className="h-6 w-6 text-black" />
-          </div>
-          <span className="font-heading text-xl font-bold text-white">
-            CodeLens <span className="text-neon-teal">AI</span>
-          </span>
-        </Link>
+    <header className="sticky top-0 z-50 border-b border-cl-border bg-cl-bg/80 backdrop-blur-lg">
+      <div className="mx-auto flex h-14 max-w-[120rem] items-center justify-between px-4 sm:px-8">
+        <div className="flex items-center gap-3">
+          {/* Hamburger Menu on Mobile */}
+          {analysisId && (
+            <button
+              onClick={toggle}
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-cl-border bg-cl-surface text-cl-muted hover:text-cl-text md:hidden focus-visible:ring-2 focus-visible:ring-cl-accent"
+              aria-label="Toggle sidebar menu"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+          )}
 
-        <nav className="hidden items-center gap-8 md:flex">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-cl-accent">
+              <Code2 className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-heading text-base font-semibold text-cl-text tracking-tight">
+              CodeLens <span className="text-cl-accent">AI</span>
+            </span>
+          </Link>
+        </div>
+
+        <nav className="hidden items-center gap-6 md:flex">
           <Link
             to="/"
-            className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
+            className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
           >
             Dashboard
           </Link>
@@ -50,25 +63,25 @@ export default function Header() {
             <>
               <Link
                 to={`${basePath}/code-quality`}
-                className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
+                className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
               >
                 Code Quality
               </Link>
               <Link
-                to={`${basePath}/code-review`}
-                className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
+                to={`${basePath}/ai-review`}
+                className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
               >
                 AI Review
               </Link>
               <Link
-                to={`${basePath}/developer-skills`}
-                className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
+                to={`${basePath}/skill-summary`}
+                className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
               >
                 Skills Profile
               </Link>
               <Link
                 to={`${basePath}/best-practices`}
-                className="font-paragraph text-sm text-foreground/80 transition-colors hover:text-neon-teal"
+                className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
               >
                 Best Practices
               </Link>
@@ -84,7 +97,7 @@ export default function Header() {
               ].map((label) => (
                 <span
                   key={label}
-                  className="font-paragraph text-sm text-foreground/40 cursor-not-allowed"
+                  className="text-sm text-cl-muted/40 cursor-not-allowed"
                 >
                   {label}
                 </span>
@@ -97,30 +110,30 @@ export default function Header() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="h-10 w-10 rounded-full border border-white/10 bg-white/5 p-0 hover:bg-white/10"
+              className="h-8 w-8 rounded-full border border-cl-border bg-cl-surface p-0 hover:bg-cl-accent/10 hover:border-cl-accent/40"
             >
-              <User className="h-5 w-5 text-neon-teal" />
+              <User className="h-4 w-4 text-cl-muted" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-56 border-white/10 bg-deep-space-blue/95 backdrop-blur-lg"
+            className="w-56 border-cl-border bg-cl-surface/95 backdrop-blur-lg"
           >
             {isAuthenticated && (
               <>
-                <div className="px-2 py-1.5 text-xs font-paragraph text-foreground/60">
+                <div className="px-2 py-1.5 text-xs text-cl-muted">
                   {member?.loginEmail || "User"}
                 </div>
                 <DropdownMenuItem
                   onClick={handleSettings}
-                  className="font-paragraph text-sm text-foreground/80 focus:bg-white/10 focus:text-neon-teal cursor-pointer"
+                  className="text-sm text-cl-text focus:bg-cl-accent/10 focus:text-cl-accent cursor-pointer"
                 >
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="font-paragraph text-sm text-foreground/80 focus:bg-white/10 focus:text-destructive cursor-pointer"
+                  className="text-sm text-cl-text focus:bg-cl-error/10 focus:text-cl-error cursor-pointer"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
@@ -130,7 +143,7 @@ export default function Header() {
             {!isAuthenticated && (
               <DropdownMenuItem
                 onClick={() => actions.login()}
-                className="font-paragraph text-sm text-foreground/80 focus:bg-white/10 focus:text-neon-teal cursor-pointer"
+                className="text-sm text-cl-text focus:bg-cl-accent/10 focus:text-cl-accent cursor-pointer"
               >
                 <User className="mr-2 h-4 w-4" />
                 Sign In
