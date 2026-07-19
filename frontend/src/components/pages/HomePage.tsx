@@ -249,7 +249,7 @@ export default function HomePage() {
 
       <main className="relative z-10 w-full">
         {/* ── HERO ─────────────────────────────────────────────────────── */}
-        <section className="relative min-h-screen flex items-center pt-24">
+        <section className="relative min-h-screen flex items-center pt-16">
           <InteractiveHeroBackground />
 
           <div className="w-full px-6 sm:px-10 md:px-16 lg:px-24">

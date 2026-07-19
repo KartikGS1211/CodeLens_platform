@@ -28,7 +28,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-cl-border bg-cl-bg/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-white/[0.03] backdrop-blur-2xl shadow-[0_1px_0_0_rgba(255,255,255,0.04),0_4px_24px_0_rgba(0,0,0,0.35)]" style={{ WebkitBackdropFilter: "blur(24px)" }}>
       <div className="mx-auto flex h-14 max-w-[120rem] items-center justify-between px-4 sm:px-8">
         <div className="flex items-center gap-3">
           {/* Hamburger Menu on Mobile */}
@@ -51,60 +51,6 @@ export default function Header() {
             </span>
           </Link>
         </div>
-
-        <nav className="hidden items-center gap-6 md:flex">
-          <Link
-            to="/"
-            className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
-          >
-            Dashboard
-          </Link>
-          {analysisId ? (
-            <>
-              <Link
-                to={`${basePath}/code-quality`}
-                className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
-              >
-                Code Quality
-              </Link>
-              <Link
-                to={`${basePath}/ai-review`}
-                className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
-              >
-                AI Review
-              </Link>
-              <Link
-                to={`${basePath}/skill-summary`}
-                className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
-              >
-                Skills Profile
-              </Link>
-              <Link
-                to={`${basePath}/best-practices`}
-                className="text-sm text-cl-muted transition-colors hover:text-cl-text focus-visible:text-cl-text"
-              >
-                Best Practices
-              </Link>
-            </>
-          ) : (
-            <>
-              {/* Disabled links (same UI, no navigation) */}
-              {[
-                "Code Quality",
-                "AI Review",
-                "Skills Profile",
-                "Best Practices",
-              ].map((label) => (
-                <span
-                  key={label}
-                  className="text-sm text-cl-muted/40 cursor-not-allowed"
-                >
-                  {label}
-                </span>
-              ))}
-            </>
-          )}
-        </nav>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
