@@ -5,7 +5,7 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
 // ---------- CONFIG ----------
 const MAX_INPUT_CHARS = 15000; // Safe buffer
@@ -208,8 +208,14 @@ Return EXACTLY this structure:
 {
   "skillRadar": {
     "domain": "AI/ML" | "Web Application" | "Backend API" | "DevOps" | "Full Stack",
-    "labels": string[],
-    "values": number[]
+    "categories": [
+      { "name": "Backend",     "score": number | null, "reason": string },
+      { "name": "Frontend",    "score": number | null, "reason": string },
+      { "name": "Database",    "score": number | null, "reason": string },
+      { "name": "DevOps/Infra","score": number | null, "reason": string },
+      { "name": "Testing",     "score": number | null, "reason": string },
+      { "name": "Security",    "score": number | null, "reason": string }
+    ]
   },
   "architecture": {
     "pattern": string,
@@ -298,17 +304,18 @@ IMPORTANT CONSTRAINTS:
 - recentIssues MUST contain at least 3 items if problems exist
 - bestPractices MUST contain at least 3 items
 - redFlags MUST contain at least 2 items
+- skillRadar.categories MUST contain EXACTLY these 6 names in this order: "Backend", "Frontend", "Database", "DevOps/Infra", "Testing", "Security"
+- For each category, set score to null if that domain is NOT present in this codebase (e.g. a pure backend API should return null for "Frontend"). Do NOT use 0 to indicate absence — 0 means "present but very poor".
 - moduleComplexity must analyze Auth, API, UI, Database with realistic scores (0-100)
 - debtForecast must be logically derived from maintainability, complexity, testing, and security quality
 - aiInsight must be 2-3 professional sentences explaining future maintainability risk
 
 CRITICAL — qualityDimensions rules:
-- Each of the 6 dimensions (readability, maintainability, security, performance, reliability, documentation)
-  MUST have a DISTINCT numeric score between 0 and 100 based on evidence in the code.
-- Do NOT assign the same score to all dimensions.
-- The 6 scores MUST NOT all fall within 10 points of each other unless the code genuinely performs
-  identically across all these aspects (extremely rare). Spread them realistically.
-- Each dimension MUST include a one-sentence "reason" justifying the assigned score.
+- Score each of the 6 dimensions (readability, maintainability, performance, reliability, security, documentation) based ONLY on evidence specific to that dimension. Do not consider your scores for other dimensions when scoring this one.
+- For each dimension, cite at least one specific observation from the code that justifies the score (e.g. for performance: 'no caching on repeated DB calls in X function' — for readability: 'consistent naming conventions, but functions exceed 80 lines in Y file').
+- It is valid and expected for scores to be similar or identical across dimensions if the code genuinely performs similarly across those aspects — do not force artificial spread.
+- It is also valid for scores to differ significantly if the evidence supports that — a file can have excellent readability but poor performance, for example.
+- Each dimension MUST include a "reason" (a one-sentence justification explaining the code observation) and a "score" (a numeric score between 0 and 100).
 - Score meanings: 0-40 = poor, 41-69 = average, 70-84 = good, 85-100 = excellent.
 
 Rules for recentIssues:
@@ -401,6 +408,120 @@ Only respond with strict valid JSON.`,
         console.warn(`Chunk ${i + 1} JSON malformed. Skipping.`);
         continue;
       }
+
+      // Validate qualityDimensions justifications
+      const requiredDims = [
+        "readability",
+        "maintainability",
+        "security",
+        "performance",
+        "reliability",
+        "documentation",
+      ];
+      let validationFailed = false;
+      const qd = parsed.qualityDimensions;
+      if (!qd || typeof qd !== "object") {
+        console.warn(
+          `[VALIDATION] Chunk ${i + 1} is missing qualityDimensions.`,
+        );
+        validationFailed = true;
+      } else {
+        for (const dim of requiredDims) {
+          const dimVal = qd[dim];
+          if (!dimVal || typeof dimVal !== "object" || dimVal === null) {
+            console.warn(
+              `[VALIDATION] Chunk ${i + 1} qualityDimension "${dim}" is not an object or is missing.`,
+            );
+            validationFailed = true;
+            break;
+          }
+          const score =
+            typeof dimVal.score !== "undefined" ? Number(dimVal.score) : NaN;
+          const reason = dimVal.reason;
+          if (Number.isNaN(score) || score < 0 || score > 100) {
+            console.warn(
+              `[VALIDATION] Chunk ${i + 1} qualityDimension "${dim}" has invalid score: ${dimVal.score}`,
+            );
+            validationFailed = true;
+            break;
+          }
+          if (typeof reason !== "string" || !reason.trim()) {
+            console.warn(
+              `[VALIDATION] Chunk ${i + 1} qualityDimension "${dim}" has missing or empty reason.`,
+            );
+            validationFailed = true;
+            break;
+          }
+        }
+      }
+
+      if (validationFailed) {
+        console.error(
+          `[VALIDATION] Rejecting response from Chunk ${i + 1} due to missing or invalid quality dimension justifications.`,
+        );
+        continue;
+      }
+
+      // ── SKILL RADAR VALIDATION (warn + repair, never hard-reject) ──────────
+      // Rationale: qualityDimensions is the critical data — we hard-reject on
+      // that. skillRadar is supplementary. If the LLM consistently misses a
+      // category, we repair rather than reject so chunkResults stays non-empty.
+      const REQUIRED_RADAR_CATEGORIES = [
+        "Backend",
+        "Frontend",
+        "Database",
+        "DevOps/Infra",
+        "Testing",
+        "Security",
+      ];
+
+      const rawCats = Array.isArray(parsed.skillRadar?.categories)
+        ? parsed.skillRadar.categories
+        : [];
+
+      // Build the canonical 6-entry array. Fill any missing/invalid entry
+      // with a null-scored default so the frontend always receives exactly 6.
+      const repairedCats = REQUIRED_RADAR_CATEGORIES.map((name) => {
+        const found = rawCats.find((c) => c?.name === name);
+        if (!found) {
+          console.warn(
+            `[VALIDATION] Chunk ${i + 1} skillRadar missing category "${name}" — inserting null entry.`,
+          );
+          return { name, score: null, reason: "Category not returned by AI." };
+        }
+        // Coerce score: must be null or 0–100
+        let score = found.score === null ? null : Number(found.score);
+        if (
+          score !== null &&
+          (Number.isNaN(score) || score < 0 || score > 100)
+        ) {
+          console.warn(
+            `[VALIDATION] Chunk ${i + 1} skillRadar "${name}" score out of range (${found.score}) — nulling.`,
+          );
+          score = null;
+        }
+        const reason =
+          typeof found.reason === "string" && found.reason.trim()
+            ? found.reason
+            : "No justification provided.";
+        return { name, score, reason };
+      });
+
+      // Write repaired categories back so downstream code gets clean data
+      if (!parsed.skillRadar) parsed.skillRadar = {};
+      parsed.skillRadar.categories = repairedCats;
+
+      // Log for audit trail
+      console.log(
+        `[EVIDENCE] Chunk ${i + 1} skillRadar categories (after repair):`,
+        JSON.stringify(repairedCats, null, 2),
+      );
+
+      // Log the validated quality dimensions (scores and justifications) for evidence
+      console.log(
+        `[EVIDENCE] Chunk ${i + 1} qualityDimensions:`,
+        JSON.stringify(qd, null, 2),
+      );
 
       // ISSUE 2 FIX: Flatten nested qualityDimensions {score, reason} → flat {key: score}
       // so callers (qualityNormalizer.js) get a plain numeric map

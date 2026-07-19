@@ -188,18 +188,50 @@ export async function runAnalysisPipeline(
 
     console.log(" Debt Forecast:", safeDebtForecast);
 
-    //  Dynamic Skill Radar Safe Handling (NEW)
+    //  Dynamic Skill Radar Safe Handling (fixed-category structure)
+    // Build scoringMethodology from real pipeline data so users see
+    // exactly what was and wasn't used when computing their scores.
+    const chunkCov = aiResult.__chunkCoverage ?? {};
+    const filesAnalyzed = safeCodeFiles.length;
+    const totalEligibleFiles = codeFiles.length;
+
+    const scoringMethodology = {
+      dataSources: [
+        `Source code from ${filesAnalyzed} file${filesAnalyzed !== 1 ? "s" : ""} (up to ${MAX_FILES} largest eligible files selected)`,
+        "GitHub repository language statistics",
+        "Public commit metadata (commit count, repo size)",
+        "Static structure analysis: directory layout, file types, naming conventions",
+      ],
+      notUsed: [
+        "Private repositories or files not accessible via the GitHub API",
+        "Pull request review history and code review comments",
+        "Team collaboration patterns and contributor activity",
+        "Non-GitHub contributions (local commits, other platforms)",
+        "Runtime behaviour, test execution results, or CI/CD pipeline outcomes",
+        totalEligibleFiles > MAX_FILES
+          ? `${totalEligibleFiles - filesAnalyzed} eligible file(s) beyond the ${MAX_FILES}-file analysis cap`
+          : null,
+      ].filter(Boolean),
+      chunkCoverage: {
+        chunksProcessed: chunkCov.chunksProcessed ?? 1,
+        totalChunks: chunkCov.totalChunks ?? 1,
+        coveragePct: chunkCov.coveragePct ?? 100,
+        note:
+          (chunkCov.coveragePct ?? 100) < 100
+            ? `Only ~${chunkCov.coveragePct}% of the provided code was analyzed due to input length limits.`
+            : "All provided code was fully processed.",
+      },
+    };
+
     const safeSkillRadar = aiResult.skillRadar
       ? {
           domain: aiResult.skillRadar.domain ?? "General",
-          labels: Array.isArray(aiResult.skillRadar.labels)
-            ? aiResult.skillRadar.labels
+          categories: Array.isArray(aiResult.skillRadar.categories)
+            ? aiResult.skillRadar.categories
             : [],
-          values: Array.isArray(aiResult.skillRadar.values)
-            ? aiResult.skillRadar.values.map((v) => Number(v))
-            : [],
+          scoringMethodology,
         }
-      : null;
+      : { scoringMethodology };
 
     const isFallback = aiResult.__source === "fallback";
 

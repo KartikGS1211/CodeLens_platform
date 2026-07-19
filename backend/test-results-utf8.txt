@@ -1,0 +1,159 @@
+﻿[dotenv@17.2.3] injecting env (8) from .env -- tip: ≡ƒùé∩╕Å backup and recover secrets: https://dotenvx.com/ops
+=== RUNNING EVALUATION ON TEST REPOS ===
+GROQ_API_KEY present: true
+GITHUB_TOKEN present: true
+
+
+>>> Analyzing tj/node-cookie-signature...
+Parsing files for: tj node-cookie-signature
+Default branch: master
+Commit SHA: b7bd4cb9500bfa5e696143f51d61e5f24f7a625d
+Tree files count: 9
+Important files: fetching 2 of 2 eligible files (all included)
+Found 2 files.
+ Starting Groq AI repository analysis...
+Chunked input into 1 chunk(s) for LLM processing.
+Processing chunk 1 of 1...
+ Rate limit hit. Retrying in 15s...
+ Rate limit hit. Retrying in 15s...
+node : Chunk 1 LLM call failed: 429 
+{"error":{"message":"Rate limit reached for 
+model `llama-3.3-70b-versatile` in 
+organization `org_01kjjekpcgfmh9mmerg4ffyy7g` 
+service tier `on_demand` on tokens per day 
+(TPD): Limit 100000, Used 97436, Requested 
+4407. Please try again in 26m32.351999999s. 
+Need more tokens? Upgrade to Dev Tier today at 
+https://console.groq.com/settings/billing","typ
+e":"tokens","code":"rate_limit_exceeded"}}. 
+Skipping.
+At line:1 char:1
++ node scripts/eval-test-repos.js > 
+test-results.log 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C 
+   hunk 1 LLM cal...d"}}. Skipping.:String) [  
+  ], RemoteException
+    + FullyQualifiedErrorId : NativeCommandErr 
+   or
+ 
+ Groq AI failed: All chunks failed to produce 
+a valid AI response
+Error analyzing node-cookie-signature: Error: 
+All chunks failed to produce a valid AI 
+response
+    at aiEvaluate (file:///C:/Users/Kartik%20Sa
+rode/OneDrive/Desktop/Projects/Kartik/CodeLens_
+AI/backend/services/aiservice.js:486:13)
+    at process.processTicksAndRejections 
+(node:internal/process/task_queues:105:5)
+    at async run (file:///C:/Users/Kartik%20Sar
+ode/OneDrive/Desktop/Projects/Kartik/CodeLens_A
+I/backend/scripts/eval-test-repos.js:41:22)
+
+
+>>> Analyzing remix-run/history...
+Parsing files for: remix-run history
+Default branch: dev
+Commit SHA: 3e9dab413f4eda8d6bce565388c5ddb7aeff9f7e
+Tree files count: 83
+Important files: fetching 10 of 43 eligible files (truncated ΓÇö only top 10 largest files included)
+Found 10 files.
+ Starting Groq AI repository analysis...
+ Input too large. Trimming...
+Chunked input into 3 chunk(s) for LLM processing.
+Processing chunk 1 of 3...
+ Rate limit hit. Retrying in 15s...
+ Rate limit hit. Retrying in 15s...
+Chunk 1 LLM call failed: 429 
+{"error":{"message":"Rate limit reached for 
+model `llama-3.3-70b-versatile` in 
+organization `org_01kjjekpcgfmh9mmerg4ffyy7g` 
+service tier `on_demand` on tokens per day 
+(TPD): Limit 100000, Used 97397, Requested 
+4853. Please try again in 32m24s. Need more 
+tokens? Upgrade to Dev Tier today at https://co
+nsole.groq.com/settings/billing","type":"tokens
+","code":"rate_limit_exceeded"}}. Skipping.
+Processing chunk 2 of 3...
+ Rate limit hit. Retrying in 15s...
+ Rate limit hit. Retrying in 15s...
+Chunk 2 LLM call failed: 429 
+{"error":{"message":"Rate limit reached for 
+model `llama-3.3-70b-versatile` in 
+organization `org_01kjjekpcgfmh9mmerg4ffyy7g` 
+service tier `on_demand` on tokens per day 
+(TPD): Limit 100000, Used 97362, Requested 
+4748. Please try again in 30m23.04s. Need more 
+tokens? Upgrade to Dev Tier today at https://co
+nsole.groq.com/settings/billing","type":"tokens
+","code":"rate_limit_exceeded"}}. Skipping.
+Processing chunk 3 of 3...
+ Rate limit hit. Retrying in 15s...
+ Rate limit hit. Retrying in 15s...
+Chunk 3 LLM call failed: 429 
+{"error":{"message":"Rate limit reached for 
+model `llama-3.3-70b-versatile` in 
+organization `org_01kjjekpcgfmh9mmerg4ffyy7g` 
+service tier `on_demand` on tokens per day 
+(TPD): Limit 100000, Used 97327, Requested 
+4451. Please try again in 25m36.192s. Need 
+more tokens? Upgrade to Dev Tier today at https
+://console.groq.com/settings/billing","type":"t
+okens","code":"rate_limit_exceeded"}}. 
+Skipping.
+ Groq AI failed: All chunks failed to produce 
+a valid AI response
+Error analyzing remix-run/history: Error: All 
+chunks failed to produce a valid AI response
+    at aiEvaluate (file:///C:/Users/Kartik%20Sa
+rode/OneDrive/Desktop/Projects/Kartik/CodeLens_
+AI/backend/services/aiservice.js:486:13)
+    at process.processTicksAndRejections 
+(node:internal/process/task_queues:105:5)
+    at async run (file:///C:/Users/Kartik%20Sar
+ode/OneDrive/Desktop/Projects/Kartik/CodeLens_A
+I/backend/scripts/eval-test-repos.js:41:22)
+
+
+>>> Analyzing koajs/koa...
+Parsing files for: koajs koa
+Default branch: master
+Commit SHA: 52d5e8ff5ac79f2479463b53df2999900ae95115
+Tree files count: 123
+Important files: fetching 10 of 82 eligible files (truncated ΓÇö only top 10 largest files included)
+Found 10 files.
+ Starting Groq AI repository analysis...
+ Input too large. Trimming...
+Chunked input into 3 chunk(s) for LLM processing.
+Processing chunk 1 of 3...
+ Rate limit hit. Retrying in 15s...
+ Rate limit hit. Retrying in 15s...
+Chunk 1 LLM call failed: 429 
+{"error":{"message":"Rate limit reached for 
+model `llama-3.3-70b-versatile` in 
+organization `org_01kjjekpcgfmh9mmerg4ffyy7g` 
+service tier `on_demand` on tokens per day 
+(TPD): Limit 100000, Used 97287, Requested 
+4931. Please try again in 31m56.351999999s. 
+Need more tokens? Upgrade to Dev Tier today at 
+https://console.groq.com/settings/billing","typ
+e":"tokens","code":"rate_limit_exceeded"}}. 
+Skipping.
+Processing chunk 2 of 3...
+ Rate limit hit. Retrying in 15s...
+ Rate limit hit. Retrying in 15s...
+Chunk 2 LLM call failed: 429 
+{"error":{"message":"Rate limit reached for 
+model `llama-3.3-70b-versatile` in 
+organization `org_01kjjekpcgfmh9mmerg4ffyy7g` 
+service tier `on_demand` on tokens per day 
+(TPD): Limit 100000, Used 97252, Requested 
+5128. Please try again in 34m16.32s. Need more 
+tokens? Upgrade to Dev Tier today at https://co
+nsole.groq.com/settings/billing","type":"tokens
+","code":"rate_limit_exceeded"}}. Skipping.
+Processing chunk 3 of 3...
+ Rate limit hit. Retrying in 15s...
+ Rate limit hit. Retrying in 15s...

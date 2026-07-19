@@ -173,6 +173,7 @@ export async function getCodeQuality(req, res) {
         qualityTrend: true,
         moduleComplexity: true,
         debtForecast: true,
+        skillRadar: true,
         status: true,
       },
     });
@@ -212,6 +213,7 @@ export async function getCodeQuality(req, res) {
       moduleComplexity: analysis.moduleComplexity,
       debtForecast: analysis.debtForecast || null,
       recentIssues: issues,
+      scoringMethodology: analysis.skillRadar?.scoringMethodology ?? null,
     });
   } catch (err) {
     console.error(" getCodeQuality failed:", err);
@@ -471,10 +473,14 @@ export async function getFullAnalysis(req, res) {
     });
   }
 
+  // Extract scoringMethodology from the skillRadar JSON blob where it was stored
+  const scoringMethodology = analysis.skillRadar?.scoringMethodology ?? null;
+
   return res.json({
     ...analysis,
     achievements: analysis.achievements,
     growthRecommendations: analysis.growthRecommendations,
+    scoringMethodology,
   });
 }
 
