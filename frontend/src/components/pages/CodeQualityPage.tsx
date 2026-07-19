@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { useParams } from "react-router-dom";
 import { useCodeQuality } from "@/hooks/useCodeQuality";
+import { ScoringMethodologyPanel } from "@/components/ui/ScoringMethodologyPanel";
 
 import {
   Chart as ChartJS,
@@ -75,6 +76,16 @@ type CodeQualityResponse = {
   qualityDimensions: QualityDimensions;
   recentIssues: Issue[];
   debtForecast?: DebtForecast | null;
+  scoringMethodology?: {
+    dataSources: string[];
+    notUsed: string[];
+    chunkCoverage: {
+      chunksProcessed: number;
+      totalChunks: number;
+      coveragePct: number;
+      note: string;
+    };
+  } | null;
 };
 
 // ---------------- HELPERS ----------------
@@ -158,6 +169,7 @@ export default function CodeQualityPage() {
     qualityDimensions,
     recentIssues,
     debtForecast,
+    scoringMethodology,
   } = data;
 
   if (!qualityTrend || !moduleComplexity || !qualityDimensions) {
@@ -225,9 +237,30 @@ export default function CodeQualityPage() {
         Code Quality Overview
       </h1>
 
-      <p className="text-foreground/60 mb-12">
+      <p className="text-foreground/60 mb-6">
         AI-evaluated health of your repository
       </p>
+
+      {/* ── PERSISTENT SCORE DISCLAIMER BANNER ───────────────────────────── */}
+      <div
+        className="mb-10 flex items-start gap-2.5 rounded-lg px-4 py-3 text-xs"
+        style={{
+          background: "rgba(251, 191, 36, 0.06)",
+          border: "1px solid rgba(251, 191, 36, 0.18)",
+        }}
+        role="note"
+        aria-label="Score disclaimer"
+      >
+        <span className="mt-0.5 shrink-0 text-amber-400/70">⚠</span>
+        <p className="text-amber-200/55 leading-relaxed">
+          <span className="font-semibold text-amber-200/70">
+            Public GitHub data only.{" "}
+          </span>
+          This score reflects public GitHub activity only. It does not account
+          for private repositories, closed-source work, or contributions outside
+          GitHub.
+        </p>
+      </div>
 
       {/* OVERALL SCORE */}
       <Card className="p-8 bg-white/5 border-white/10 mb-12">
@@ -236,7 +269,7 @@ export default function CodeQualityPage() {
       </Card>
 
       {/* METRICS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
         {metrics.map((m) => (
           <Card key={m.label} className="p-6 bg-white/5 border-white/10">
             <p className="text-sm text-foreground/60">{m.label}</p>
@@ -244,6 +277,12 @@ export default function CodeQualityPage() {
           </Card>
         ))}
       </div>
+
+      {/* Scoring methodology transparency panel — below quality metrics */}
+      <ScoringMethodologyPanel
+        methodology={scoringMethodology}
+        className="mb-10"
+      />
 
       {/*  TECHNICAL DEBT FORECAST  */}
       {debtForecast && (

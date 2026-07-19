@@ -53,7 +53,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://codelens-platform.onrender.com";
+  import.meta.env.PUBLIC_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5000";
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
