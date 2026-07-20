@@ -23,8 +23,8 @@ import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import AnalyzeRepositoryModal from "./AnalyzeRepositoryModal";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import InteractiveHeroBackground from "../ui/InteractiveHeroBackground";
+import HeroMockup from "../ui/HeroMockup";
 import { Repository } from "../../types/repository";
 import { useMember } from "@/context/AuthContext";
 import apiClient from "@/lib/apiClient";
@@ -249,52 +249,105 @@ export default function HomePage() {
 
       <main className="relative z-10 w-full">
         {/* ── HERO ─────────────────────────────────────────────────────── */}
-        <section className="relative min-h-screen flex items-center pt-16">
+        <section className="relative flex items-center pt-20 pb-16 sm:pb-20 lg:min-h-screen lg:pt-16">
           <InteractiveHeroBackground />
 
-          <div className="w-full px-6 sm:px-10 md:px-16 lg:px-24">
-            <div className="max-w-[800px]">
-              <motion.h1
-                className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tight"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                See what your code <br className="hidden sm:block" />
-                <span className="text-cl-accent">actually says</span> about you.
-              </motion.h1>
+          <div className="w-full px-5 sm:px-8 md:px-14 lg:px-24 py-8 lg:py-0">
+            <div className="flex flex-col lg:flex-row items-center gap-10 sm:gap-12 xl:gap-20 w-full">
+              {/* ── Left: headline + CTAs ──────────────────────────────────── */}
+              <div className="flex-1 min-w-0 w-full text-center sm:text-left">
+                <motion.div
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cl-accent/30 bg-cl-accent/8 mb-5 sm:mb-7"
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-cl-accent animate-pulse" />
+                  <span className="text-xs font-semibold text-cl-accent tracking-wide">
+                    AI-Powered Code Intelligence
+                  </span>
+                </motion.div>
 
-              <motion.p
-                className="max-w-xl text-cl-muted mb-10 text-base sm:text-lg leading-relaxed"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-              >
-                Analyze any repo. Get real quality scores, security flags, and a
-                skill breakdown backed by evidence — not guesses.
-              </motion.p>
+                <motion.h1
+                  className="font-heading text-3xl sm:text-5xl md:text-5xl lg:text-6xl font-bold mb-5 sm:mb-6 leading-[1.1] tracking-tight"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.05 }}
+                >
+                  See what your code <br className="hidden sm:block" />
+                  <span className="text-cl-accent">actually says</span> about
+                  you.
+                </motion.h1>
 
+                <motion.p
+                  className="max-w-lg mx-auto sm:mx-0 text-cl-muted mb-8 sm:mb-10 text-sm sm:text-base lg:text-lg leading-relaxed"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.12 }}
+                >
+                  Analyze any repo. Get real quality scores, security flags, and
+                  a skill breakdown backed by evidence — not guesses.
+                </motion.p>
+
+                <motion.div
+                  className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                  <button
+                    id="cta-analyze-repo"
+                    onClick={() => requireLogin(() => setOpenModal(true))}
+                    className="px-6 sm:px-7 py-3 sm:py-3.5 bg-cl-accent text-white font-semibold rounded-lg hover:bg-cl-accent-hover transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cl-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cl-bg shadow-lg shadow-cl-accent/20 text-sm sm:text-base"
+                  >
+                    Analyze a Repo
+                  </button>
+
+                  <button
+                    id="cta-add-repository"
+                    onClick={() => requireLogin(() => setOpenModal(true))}
+                    className="px-6 sm:px-7 py-3 sm:py-3.5 border border-cl-border rounded-lg text-cl-text hover:bg-cl-surface hover:border-cl-accent/40 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cl-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cl-bg text-sm sm:text-base"
+                  >
+                    Add Repository
+                  </button>
+                </motion.div>
+
+                {/* Trust pills */}
+                <motion.div
+                  className="flex flex-wrap justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-2 mt-8 sm:mt-10"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.7, delay: 0.38 }}
+                >
+                  {[
+                    "Quality Scores",
+                    "Security Flags",
+                    "Skill Breakdown",
+                    "Evidence-backed",
+                  ].map((item) => (
+                    <span
+                      key={item}
+                      className="text-xs text-cl-muted/70 flex items-center gap-1.5"
+                    >
+                      <span className="w-1 h-1 rounded-full bg-cl-accent/60" />
+                      {item}
+                    </span>
+                  ))}
+                </motion.div>
+              </div>
+
+              {/* ── Right: Animated mockup card ─────────────────────────────── */}
+              {/* Visible on ALL screens — stacks below on mobile, side-by-side on lg+ */}
               <motion.div
-                className="flex flex-wrap gap-4"
-                initial={{ opacity: 0, y: 20 }}
+                className="w-full flex justify-center lg:flex-1 lg:justify-end relative z-10 mt-4 sm:mt-6 lg:mt-0"
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
+                transition={{ duration: 0.7, delay: 0.3 }}
               >
-                <button
-                  id="cta-analyze-repo"
-                  onClick={() => requireLogin(() => setOpenModal(true))}
-                  className="px-7 py-3.5 bg-cl-accent text-white font-semibold rounded-lg hover:bg-cl-accent-hover transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cl-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cl-bg"
-                >
-                  Analyze a Repo
-                </button>
-
-                <button
-                  id="cta-add-repository"
-                  onClick={() => requireLogin(() => setOpenModal(true))}
-                  className="px-7 py-3.5 border border-cl-border rounded-lg text-cl-text hover:bg-cl-surface hover:border-cl-accent/40 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-cl-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cl-bg"
-                >
-                  Add Repository
-                </button>
+                {/* Scale down the mockup on small screens */}
+                <div className="w-full max-w-[340px] xs:max-w-[380px] sm:max-w-[440px] md:max-w-[480px] lg:max-w-[500px]">
+                  <HeroMockup />
+                </div>
               </motion.div>
             </div>
           </div>
