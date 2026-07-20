@@ -11,6 +11,27 @@ CodeLens AI analyzes a repository's actual source code — not commit counts, no
 
 ---
 
+## The Problem
+
+**Code review tools miss the "why."** Traditional linters and static analyzers (ESLint, SonarQube) catch syntax issues and known patterns, but they can't reason about _why_ a design choice was made or whether an architecture actually holds together — they check rules, not intent.
+
+**Developer skill evaluation is broken.** Resumes are self-reported. Live coding interviews measure performance under artificial pressure, not how someone actually writes and structures code day-to-day. There's no easy way to look at a real codebase and get an honest read on someone's actual skills.
+
+**Existing "AI code review" tools are a black box.** Most give you a confident-sounding score with no way to check what it's based on — you can't tell if it analyzed your whole repo or a fraction of it, or whether a low score reflects a real problem or a hallucination.
+
+## The Solution
+
+CodeLens AI combines LLM-based reasoning (which understands intent and architecture, not just syntax) with a skill-profiling layer that scores actual repository code instead of self-reported claims — and makes every score traceable back to what was analyzed and why.
+
+|                                       | Rule-based linters | Traditional static analysis | CodeLens AI |
+| ------------------------------------- | ------------------ | --------------------------- | ----------- |
+| Understands intent/architecture       | ❌                 | Partial                     | ✅          |
+| Developer skill profiling             | ❌                 | ❌                          | ✅          |
+| Shows what was actually analyzed      | ❌                 | ❌                          | ✅          |
+| Evidence per score, not just a number | ❌                 | ❌                          | ✅          |
+
+---
+
 ## What it does
 
 1. **Paste a GitHub repo URL** → CodeLens fetches the source and runs it through an LLM-based analysis pipeline
