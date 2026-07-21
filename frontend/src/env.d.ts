@@ -4,14 +4,14 @@ type PageMetadata = Record<string, unknown>;
 /// <reference types="astro/client" />
 /// <reference path="../.astro/types.d.ts" />
 
+import "react-router-dom";
+
 declare const Astro: Readonly<import("astro").AstroGlobal>;
 
 declare global {
   interface SDKTypeMode {
     strict: true;
   }
-
-  /// <reference types="astro/client" />
 
   interface ImportMetaEnv {
     VITE_API_BASE_URL: any;
