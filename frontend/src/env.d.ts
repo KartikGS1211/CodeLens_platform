@@ -1,4 +1,5 @@
-import type { PageMetadata } from "@wix/astro-pages";
+// PageMetadata type — stubbed to remove dependency on @wix/astro-pages (not available on Vercel)
+type PageMetadata = Record<string, unknown>;
 
 /// <reference types="astro/client" />
 /// <reference path="../.astro/types.d.ts" />
@@ -12,14 +13,14 @@ declare global {
 
   /// <reference types="astro/client" />
 
-interface ImportMetaEnv {
-  VITE_API_BASE_URL: any;
-  readonly PUBLIC_API_BASE_URL: string
-}
+  interface ImportMetaEnv {
+    VITE_API_BASE_URL: any;
+    readonly PUBLIC_API_BASE_URL: string;
+  }
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv
-}
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
 }
 
 declare module "react-router-dom" {
