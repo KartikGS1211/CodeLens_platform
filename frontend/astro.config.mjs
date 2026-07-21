@@ -5,7 +5,6 @@ import vercel from "@astrojs/vercel";
 import react from "@astrojs/react";
 import customErrorOverlayPlugin from "./vite-error-overlay-plugin.js";
 import path from "path";
-import "dotenv/config";
 
 import { fileURLToPath } from "url";
 
@@ -24,7 +23,9 @@ export default defineConfig({
         "@": path.resolve(__dirname, "src"),
       },
     },
-    plugins: [customErrorOverlayPlugin()],
+    // Only use the custom overlay plugin in dev mode (not on Vercel/production)
+    plugins:
+      process.env.NODE_ENV !== "production" ? [customErrorOverlayPlugin()] : [],
   },
 
   devToolbar: {
