@@ -5,6 +5,7 @@
 CodeLens AI analyzes a repository's actual source code — not commit counts, not self-reported skills — and turns it into a quality score, security flags, and an evidence-based developer skill breakdown.
 
 [![CI/CD](https://github.com/KartikGS1211/CodeLens_platform/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/KartikGS1211/CodeLens_platform/actions/workflows/ci-cd.yml)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED.svg?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D%2018.0.0-blue.svg?style=flat-square)](https://nodejs.org/)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%20%7C%20Neon-orange.svg?style=flat-square)](https://neon.tech/)
 [![ORM](https://img.shields.io/badge/orm-Prisma-purple.svg?style=flat-square)](https://www.prisma.io/)
