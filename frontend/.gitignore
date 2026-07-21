@@ -16,6 +16,7 @@ out
 dist
 .astro/
 .wix
+.vercel/
 
 # dependencies
 node_modules
