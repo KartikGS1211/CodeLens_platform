@@ -1,0 +1,171 @@
+# ============================================================
+# CodeLens AI — CI/CD Pipeline
+# ============================================================
+# Jobs:
+#   1. backend-ci  → runs on every push & PR, all branches
+#   2. frontend-ci → runs on every push & PR, all branches
+#   3. deploy      → runs ONLY on push to main, after both CI
+#                    jobs pass; safely skips if Render secrets
+#                    haven't been configured yet.
+# ============================================================
+
+name: CI/CD
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # JOB 1 — Backend CI
+  # ──────────────────────────────────────────────────────────
+  backend-ci:
+    name: Backend CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # backend/Dockerfile uses node:20-alpine.
+      # No `engines` field in backend/package.json → pin to 20.
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      # Validates that schema.prisma is syntactically correct
+      # and generates the Prisma client (no DATABASE_URL needed
+      # for `prisma generate` — it only reads the schema file).
+      - name: Generate Prisma client (validates schema)
+        working-directory: backend
+        run: npx prisma generate
+
+      # The backend package.json has no `lint` script.
+      # This step checks for one and skips gracefully if absent.
+      - name: Run lint (if script exists)
+        working-directory: backend
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.lint ? 0 : 1)"; then
+            echo "→ 'lint' script found. Running..."
+            npm run lint
+          else
+            echo "⚠️  No 'lint' script defined in backend/package.json — skipping lint."
+          fi
+
+      # The backend package.json has no `test` script.
+      # This step checks for one and skips gracefully if absent.
+      - name: Run tests (if script exists)
+        working-directory: backend
+        run: |
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test && p.scripts.test !== 'echo \"Error: no test specified\" && exit 1' ? 0 : 1)"; then
+            echo "→ 'test' script found. Running..."
+            npm test
+          else
+            echo "⚠️  No real test script in backend/package.json — skipping tests."
+          fi
+
+      # Build the Docker image from backend/Dockerfile.
+      # Uses the backend/ directory as the build context.
+      # A failed Docker build fails this job with a clear red ✗.
+      - name: Build backend Docker image
+        run: docker build ./backend --tag codelens-backend:ci
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 2 — Frontend CI
+  # ──────────────────────────────────────────────────────────
+  frontend-ci:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      # frontend/.npmrc (legacy-peer-deps=true + force=true) is
+      # tracked in the repo and is required to resolve the vite v4/v5
+      # peer-dependency conflict.  npm ci reads it automatically.
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # Build with astro.config.docker.mjs (Node adapter, standalone mode).
+      # This is the SAME config used by frontend/Dockerfile — validating it
+      # here means a config error is caught at the Astro step, not just later
+      # at `docker build`.  astro.config.mjs (Vercel adapter) is a local-dev
+      # leftover and is NOT the deployment target, so it isn't validated here.
+      - name: Build frontend (Astro — docker config)
+        working-directory: frontend
+        run: npx astro build --config astro.config.docker.mjs
+
+      # Build the Docker image from frontend/Dockerfile.
+      # The Dockerfile uses astro.config.docker.mjs (Node adapter).
+      # A failed Docker build fails this job with a clear red ✗.
+      - name: Build frontend Docker image
+        run: docker build ./frontend --tag codelens-frontend:ci
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 3 — Deploy (Render trigger)
+  # ──────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+    needs: [backend-ci, frontend-ci]
+    # Only runs on direct pushes to main (not PRs, not other branches)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      # ── Backend deploy hook ─────────────────────────────
+      - name: Trigger Render backend deploy
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "──────────────────────────────────────────────────────"
+            echo "⏭  RENDER_DEPLOY_HOOK_URL is not set."
+            echo "   Render hasn't been connected yet."
+            echo "   Skipping backend deploy trigger."
+            echo ""
+            echo "   See README › Deployment section to set this up."
+            echo "──────────────────────────────────────────────────────"
+            exit 0
+          fi
+          echo "→ Triggering Render backend deploy..."
+          curl --fail-with-body -s -X POST "$HOOK_URL"
+          echo ""
+          echo "✅ Backend deploy hook triggered."
+
+      # ── Frontend deploy hook ────────────────────────────
+      - name: Trigger Render frontend deploy
+        env:
+          HOOK_URL: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "──────────────────────────────────────────────────────"
+            echo "⏭  RENDER_FRONTEND_DEPLOY_HOOK_URL is not set."
+            echo "   Render hasn't been connected for the frontend yet."
+            echo "   Skipping frontend deploy trigger."
+            echo ""
+            echo "   See README › Deployment section to set this up."
+            echo "──────────────────────────────────────────────────────"
+            exit 0
+          fi
+          echo "→ Triggering Render frontend deploy..."
+          curl --fail-with-body -s -X POST "$HOOK_URL"
+          echo ""
+          echo "✅ Frontend deploy hook triggered."

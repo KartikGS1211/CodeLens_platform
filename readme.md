@@ -4,6 +4,7 @@
 
 CodeLens AI analyzes a repository's actual source code — not commit counts, not self-reported skills — and turns it into a quality score, security flags, and an evidence-based developer skill breakdown.
 
+[![CI/CD](https://github.com/KartikGS1211/CodeLens_platform/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/KartikGS1211/CodeLens_platform/actions/workflows/ci-cd.yml)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D%2018.0.0-blue.svg?style=flat-square)](https://nodejs.org/)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%20%7C%20Neon-orange.svg?style=flat-square)](https://neon.tech/)
 [![ORM](https://img.shields.io/badge/orm-Prisma-purple.svg?style=flat-square)](https://www.prisma.io/)
@@ -177,54 +178,72 @@ docker compose down      # stop and remove containers
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PUBLIC_BACKEND_URL` | **Browser-facing** backend URL. Must be host-reachable (`http://localhost:5000` locally). Do **not** use the internal Docker hostname (`http://backend:5000`) — the browser cannot resolve it. |
 
-### Deploying to Render (Docker-based Web Services)
+## Deployment
 
-Render supports pointing a Web Service directly at a `Dockerfile`. No build pack config needed.
+Deployment is managed by GitHub Actions (`.github/workflows/ci-cd.yml`). The pipeline runs full CI on every push and PR. The deploy step only triggers after **both** CI jobs pass on a push to `main`, and it safely skips (exit 0, green ✓) if the Render secrets haven't been configured yet.
 
-#### Step 1 — Create two Web Services on Render
+### Step 1 — Create two Render Web Services
 
-Go to [render.com](https://render.com) → New → Web Service → connect your GitHub repo.
+Go to [render.com](https://render.com) → **New → Web Service** → connect the `KartikGS1211/CodeLens_platform` GitHub repo.
 
-For each service:
+Create **two separate services** — one for the backend and one for the frontend:
 
-- **Environment:** Docker
-- **Dockerfile path:** `backend/Dockerfile` or `frontend/Dockerfile`
-- **Build context:** same directory as the Dockerfile (i.e. `backend/` or `frontend/`)
+| Setting              | Backend service      | Frontend service      |
+| -------------------- | -------------------- | --------------------- |
+| Environment          | Docker               | Docker                |
+| Dockerfile path      | `backend/Dockerfile` | `frontend/Dockerfile` |
+| Build context / root | `backend/`           | `frontend/`           |
 
-#### Step 2 — Set environment variables in Render's dashboard
+Set these **Environment Variables** in Render's dashboard for each service. **Never bake secrets into Docker images.**
 
-Set these under **Environment → Environment Variables** for each service. **Do not bake them into the image.**
+**Backend service — required env vars:**
 
-**Backend service:**
+| Variable               | Value / Description                                                               |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| `DATABASE_URL`         | Neon PostgreSQL connection string (`postgresql://...?sslmode=require`)            |
+| `GROQ_API_KEY`         | Groq API key for LLM analysis (starts with `gsk_`)                                |
+| `GITHUB_CLIENT_ID`     | GitHub OAuth App client ID                                                        |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth App client secret                                                    |
+| `GITHUB_CALLBACK_URL`  | `https://<your-backend-render-url>/api/auth/github/callback`                      |
+| `SESSION_SECRET`       | A long random string for express-session cookie signing                           |
+| `FRONTEND_URL`         | `https://<your-frontend-render-url>` (used for CORS + OAuth redirect after login) |
+| `NODE_ENV`             | `production`                                                                      |
+| `PORT`                 | `5000` (or leave unset — Render injects its own port via `$PORT`)                 |
 
-| Key                    | Value                                                        |
-| ---------------------- | ------------------------------------------------------------ |
-| `DATABASE_URL`         | Your Neon connection string                                  |
-| `GROQ_API_KEY`         | Your Groq API key                                            |
-| `GITHUB_CLIENT_ID`     | Your GitHub OAuth App client ID                              |
-| `GITHUB_CLIENT_SECRET` | Your GitHub OAuth App client secret                          |
-| `GITHUB_CALLBACK_URL`  | `https://<your-backend-render-url>/api/auth/github/callback` |
-| `SESSION_SECRET`       | A long random string                                         |
-| `FRONTEND_URL`         | `https://<your-frontend-render-url>`                         |
-| `NODE_ENV`             | `production`                                                 |
+**Frontend service — required env vars:**
 
-**Frontend service:**
+| Variable             | Value / Description                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| `PUBLIC_BACKEND_URL` | `https://<your-backend-render-url>` — must be the **public** URL, not the internal Docker host |
 
-| Key                  | Value                               |
-| -------------------- | ----------------------------------- |
-| `PUBLIC_BACKEND_URL` | `https://<your-backend-render-url>` |
+### Step 2 — Add Deploy Hooks as GitHub Secrets
 
-#### Step 3 — Update GitHub OAuth App
+Once each Render service is live:
 
-In your GitHub OAuth App settings, add the production callback URL:
+1. In Render: go to the service → **Settings → Deploy Hook** → copy the URL
+2. In GitHub: go to the repo → **Settings → Secrets and variables → Actions → New repository secret**
+
+Add these two secrets:
+
+| GitHub Secret Name                | Value                                        |
+| --------------------------------- | -------------------------------------------- |
+| `RENDER_DEPLOY_HOOK_URL`          | Deploy hook URL for the **backend** service  |
+| `RENDER_FRONTEND_DEPLOY_HOOK_URL` | Deploy hook URL for the **frontend** service |
+
+### Step 3 — Turn Off Render Auto-Deploy
+
+On **each** Render service, go to **Settings → Build & Deploy** and set **Auto-Deploy** to **No**.
+This ensures GitHub Actions is the single source of truth for deployments — Render will only deploy when the pipeline explicitly triggers it via the deploy hook, never on its own.
+
+### Step 4 — Update GitHub OAuth App
+
+In your [GitHub OAuth App settings](https://github.com/settings/developers), add the production callback URL:
 
 ```
 https://<your-backend-render-url>/api/auth/github/callback
 ```
 
-#### Step 4 — Deploy
-
-Render will build the Docker image from your repo on each push to your main branch. Migrations run automatically on backend container start.
+> **Until these secrets are added:** every push still runs the full CI pipeline (install → Prisma generate → lint check → test check → Astro build → Docker image builds for both services). Only the final deploy trigger step is skipped — cleanly, with exit code 0. The workflow run shows green. Nothing breaks.
 
 ---
 
