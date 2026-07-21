@@ -117,6 +117,117 @@ npm install
 npm run dev         # runs on :4321
 ```
 
+## Docker
+
+This project ships production-ready Docker images for both services and a `docker-compose.yml` for local containerised development.
+
+### Architecture note — frontend adapter
+
+The frontend is Astro with `output: "server"` (SSR mode). For Docker builds it uses the **`@astrojs/node` standalone adapter** (`astro.config.docker.mjs`) instead of the Vercel adapter. The build produces a self-contained Node.js HTTP server at `dist/server/entry.mjs`. This means **nginx cannot be used** — nginx only serves static files and has no way to execute server-side rendering logic.
+
+### Local development with docker-compose
+
+**Prerequisites:** Docker Desktop installed and running.
+
+**1. Populate your env files first**
+
+`backend/.env` and `frontend/.env` must exist and be filled in (see [Environment variables](#environment-variables) below). Docker never reads from the host shell — it only reads from those files.
+
+**2. Build and start both services**
+
+```bash
+# From the project root
+docker compose up --build
+```
+
+- Backend API: [http://localhost:5000](http://localhost:5000)
+- Frontend: [http://localhost:4321](http://localhost:4321)
+
+**3. On first run (or after schema changes)**
+
+`prisma migrate deploy` runs automatically as part of the backend container's startup command before `node server.js`. No manual step required. If the migration fails, the server will not start (fail-fast by design).
+
+**4. Subsequent runs (no code changes)**
+
+```bash
+docker compose up        # skips rebuild, uses cached images
+docker compose down      # stop and remove containers
+```
+
+### Environment variables
+
+> **Never hardcode secrets in `docker-compose.yml`.** All secrets are injected via `env_file` at runtime and are excluded from Docker images by `.dockerignore`.
+
+#### `backend/.env`
+
+| Variable               | Description                                                                |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `PORT`                 | Port the backend listens on (default `5000`)                               |
+| `DATABASE_URL`         | Neon PostgreSQL connection string (`postgresql://...?sslmode=require`)     |
+| `GROQ_API_KEY`         | Groq API key for LLM analysis                                              |
+| `GITHUB_CLIENT_ID`     | GitHub OAuth App client ID                                                 |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth App client secret                                             |
+| `GITHUB_CALLBACK_URL`  | OAuth callback URL (e.g. `http://localhost:5000/api/auth/github/callback`) |
+| `SESSION_SECRET`       | Secret string for express-session cookie signing                           |
+| `FRONTEND_URL`         | URL of the frontend (used for CORS and OAuth redirects)                    |
+
+#### `frontend/.env`
+
+| Variable             | Description                                                                                                                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_BACKEND_URL` | **Browser-facing** backend URL. Must be host-reachable (`http://localhost:5000` locally). Do **not** use the internal Docker hostname (`http://backend:5000`) — the browser cannot resolve it. |
+
+### Deploying to Render (Docker-based Web Services)
+
+Render supports pointing a Web Service directly at a `Dockerfile`. No build pack config needed.
+
+#### Step 1 — Create two Web Services on Render
+
+Go to [render.com](https://render.com) → New → Web Service → connect your GitHub repo.
+
+For each service:
+
+- **Environment:** Docker
+- **Dockerfile path:** `backend/Dockerfile` or `frontend/Dockerfile`
+- **Build context:** same directory as the Dockerfile (i.e. `backend/` or `frontend/`)
+
+#### Step 2 — Set environment variables in Render's dashboard
+
+Set these under **Environment → Environment Variables** for each service. **Do not bake them into the image.**
+
+**Backend service:**
+
+| Key                    | Value                                                        |
+| ---------------------- | ------------------------------------------------------------ |
+| `DATABASE_URL`         | Your Neon connection string                                  |
+| `GROQ_API_KEY`         | Your Groq API key                                            |
+| `GITHUB_CLIENT_ID`     | Your GitHub OAuth App client ID                              |
+| `GITHUB_CLIENT_SECRET` | Your GitHub OAuth App client secret                          |
+| `GITHUB_CALLBACK_URL`  | `https://<your-backend-render-url>/api/auth/github/callback` |
+| `SESSION_SECRET`       | A long random string                                         |
+| `FRONTEND_URL`         | `https://<your-frontend-render-url>`                         |
+| `NODE_ENV`             | `production`                                                 |
+
+**Frontend service:**
+
+| Key                  | Value                               |
+| -------------------- | ----------------------------------- |
+| `PUBLIC_BACKEND_URL` | `https://<your-backend-render-url>` |
+
+#### Step 3 — Update GitHub OAuth App
+
+In your GitHub OAuth App settings, add the production callback URL:
+
+```
+https://<your-backend-render-url>/api/auth/github/callback
+```
+
+#### Step 4 — Deploy
+
+Render will build the Docker image from your repo on each push to your main branch. Migrations run automatically on backend container start.
+
+---
+
 ## Roadmap
 
 - [ ] Benchmark accuracy report against real repositories

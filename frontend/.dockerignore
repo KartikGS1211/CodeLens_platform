@@ -1,0 +1,40 @@
+# Dependencies & build artifacts
+node_modules
+.npm
+dist
+.astro
+
+# Environment files — NEVER bake secrets into the image
+.env
+.env.*
+*.env
+
+# Git internals
+.git
+.gitignore
+
+# Editor / OS noise
+.DS_Store
+.idea
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vercel / Wix / platform-specific build dirs
+.vercel
+.wix
+out
+
+# Test artifacts
+coverage
+vitest.config.ts
+vitest.setup.ts
+
+# Misc
+*.txt
+photo-theme.txt

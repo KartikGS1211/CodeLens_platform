@@ -1,0 +1,97 @@
+# ============================================================
+# docker-compose.yml — CodeLens AI Local Development
+# ============================================================
+# Usage:
+#   1. Ensure backend/.env and frontend/.env are populated (see README).
+#   2. docker compose up --build
+#
+# This compose file does NOT include a Postgres container because
+# this project uses Neon (cloud Postgres). DATABASE_URL in backend/.env
+# must point to your Neon connection string.
+# ============================================================
+
+version: "3.9"
+
+services:
+  # ----------------------------------------------------------
+  # Backend — Node.js / Express / Prisma
+  # ----------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: codelens_backend
+
+    # Load all secrets from the backend .env file.
+    # These are NEVER hardcoded here — env_file injects them at runtime.
+    env_file:
+      - ./backend/.env
+
+    # Override specific env vars that need to be aware of the container
+    # environment. NODE_ENV=production ensures session cookies are set
+    # to secure: true and sameSite: none as expected.
+    environment:
+      NODE_ENV: production
+
+    ports:
+      # Map host:container — the browser will hit localhost:5000
+      - "5000:5000"
+
+    networks:
+      - codelens_net
+
+    restart: unless-stopped
+
+  # ----------------------------------------------------------
+  # Frontend — Astro SSR (Node adapter, standalone mode)
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: codelens_frontend
+
+    env_file:
+      - ./frontend/.env
+
+    environment:
+      # The Astro Node standalone server binds to this host/port.
+      HOST: "0.0.0.0"
+      PORT: "4321"
+
+    ports:
+      - "4321:4321"
+
+    networks:
+      - codelens_net
+
+    # Start the frontend after the backend is up.
+    depends_on:
+      - backend
+
+    restart: unless-stopped
+
+networks:
+  codelens_net:
+    driver: bridge
+
+# ============================================================
+# PUBLIC_BACKEND_URL — important note on container networking:
+#
+# The frontend uses PUBLIC_BACKEND_URL to make API calls to the backend.
+# Astro PUBLIC_ variables are embedded at BUILD TIME into client-side JS
+# and are executed in the USER'S BROWSER — not inside the Docker network.
+#
+# This means:
+#   ✅ PUBLIC_BACKEND_URL=http://localhost:5000   ← correct for local Docker
+#   ❌ PUBLIC_BACKEND_URL=http://backend:5000     ← WRONG — "backend" hostname
+#                                                    only resolves inside Docker;
+#                                                    the browser cannot reach it.
+#
+# The internal hostname `http://backend:5000` would only be useful for
+# server-to-server API calls within the Docker network (e.g. from a BFF or
+# a Next.js API route), not for browser fetch() calls.
+#
+# For production on Render, set PUBLIC_BACKEND_URL to your backend's
+# public Render URL (e.g. https://codelens-backend.onrender.com).
+# ============================================================
