@@ -14,7 +14,6 @@ declare global {
   }
 
   interface ImportMetaEnv {
-    VITE_API_BASE_URL: any;
     readonly PUBLIC_API_BASE_URL: string;
   }
 
