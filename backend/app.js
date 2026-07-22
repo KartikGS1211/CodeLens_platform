@@ -37,6 +37,12 @@ app.use(
 
 app.use(express.json());
 
+// Disable caching for api requests (Fixes 304 Not Modified issue on /me in prod)
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  next();
+});
+
 // Build session store — use Postgres in production, memory in dev
 const isProduction = process.env.NODE_ENV === "production";
 
