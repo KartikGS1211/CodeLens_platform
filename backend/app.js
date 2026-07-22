@@ -9,13 +9,8 @@ import analysisRoutes from "./routes/analysisroutes.js";
 const app = express();
 
 const allowedOrigins = [
-  "https://codelens-platform-new.onrender.com",
   "https://code-lens-platform.vercel.app",
-  "https://code-lens.platform.vercel.app",
   "http://localhost:4321",
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://localhost:4322",
 ];
 
 app.use(

@@ -17,9 +17,7 @@ passport.deserializeUser(async (id, done) => {
 
 const githubClientId = process.env.GITHUB_CLIENT_ID;
 const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
-const callbackUrl =
-  process.env.GITHUB_CALLBACK_URL ||
-  "http://localhost:5000/api/auth/github/callback";
+const callbackUrl = process.env.GITHUB_CALLBACK_URL;
 
 if (!githubClientId || !githubClientSecret) {
   console.warn(
