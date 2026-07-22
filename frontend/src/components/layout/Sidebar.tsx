@@ -1,4 +1,4 @@
-import { NavLink, useParams } from "react-router-dom";
+import { NavLink, Link, useParams } from "react-router-dom";
 import {
   LayoutDashboard,
   BarChart3,
@@ -6,6 +6,7 @@ import {
   User,
   BookOpen,
   X,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/context/SidebarContext";
@@ -55,12 +56,26 @@ export default function Sidebar() {
 
   const LinksList = () => (
     <nav className="flex flex-col gap-1 p-3">
+      {/* ── Home / Dashboard link ── */}
+      <Link
+        to="/"
+        onClick={close}
+        className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-cl-muted hover:bg-cl-surface hover:text-cl-text border border-transparent transition-all focus-visible:ring-2 focus-visible:ring-cl-accent"
+      >
+        <Home className="h-4 w-4" />
+        Home
+      </Link>
+
+      {/* Divider */}
+      <div className="my-1 border-t border-cl-border/60" />
+
+      {/* ── Analysis nav items ── */}
       {navItems.map(({ title, href, icon: Icon, end }) => (
         <NavLink
           key={title}
           to={href}
           end={end}
-          onClick={close} // Auto-close sidebar on navigate (essential on mobile)
+          onClick={close}
           className={({ isActive }) =>
             cn(
               "flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-cl-accent",
