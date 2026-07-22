@@ -29,7 +29,7 @@ import { Repository } from "../../types/repository";
 import { useMember } from "@/context/AuthContext";
 import apiClient from "@/lib/apiClient";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+// API URL is centralised in apiClient (reads PUBLIC_API_BASE_URL)
 
 /* ---------- TYPES ---------- */
 type StatItem = {

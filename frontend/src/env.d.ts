@@ -14,7 +14,14 @@ declare global {
   }
 
   interface ImportMetaEnv {
+    // Custom env vars
     readonly PUBLIC_API_BASE_URL: string;
+    // Vite built-in env vars
+    readonly MODE: string;
+    readonly BASE_URL: string;
+    readonly PROD: boolean;
+    readonly DEV: boolean;
+    readonly SSR: boolean;
   }
 
   interface ImportMeta {
