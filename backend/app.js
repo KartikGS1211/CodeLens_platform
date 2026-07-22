@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import passport from "./utils/auth.js";
 import authRoutes from "./routes/authroutes.js";
 import analysisRoutes from "./routes/analysisroutes.js";
@@ -10,6 +11,7 @@ const app = express();
 const allowedOrigins = [
   "https://codelens-platform-new.onrender.com",
   "https://code-lens-platform.vercel.app",
+  "https://code-lens.platform.vercel.app",
   "http://localhost:4321",
   "http://localhost:3000",
   "http://localhost:5173",
@@ -35,16 +37,31 @@ app.use(
 
 app.use(express.json());
 
+// Build session store — use Postgres in production, memory in dev
+const isProduction = process.env.NODE_ENV === "production";
+
+let sessionStore;
+if (isProduction && process.env.DATABASE_URL) {
+  const PgSession = connectPgSimple(session);
+  sessionStore = new PgSession({
+    conString: process.env.DATABASE_URL,
+    tableName: "user_sessions", // auto-created on first run
+    createTableIfMissing: true,
+  });
+}
+
 // Configure express session middleware
 app.use(
   session({
+    store: sessionStore, // undefined in dev → MemoryStore (fine for local)
     secret: process.env.SESSION_SECRET || "codelens-secret-key-session-dev",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production", // true in production
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      secure: isProduction, // HTTPS-only in prod
+      sameSite: isProduction ? "none" : "lax", // cross-site in prod
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      httpOnly: true,
     },
   }),
 );
