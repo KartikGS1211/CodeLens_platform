@@ -25,12 +25,22 @@ router.get(
     delete req.session.returnToUrl;
 
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:4321";
-    try {
-      const redirectUrl = new URL(returnToUrl, frontendUrl).toString();
-      res.redirect(redirectUrl);
-    } catch (e) {
-      res.redirect(frontendUrl + "/");
-    }
+
+    // CRITICAL: Save session to store BEFORE redirecting.
+    // Without this, there's a race condition where the browser calls /me
+    // before the session is written to the DB — always returning unauthenticated.
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error after OAuth callback:", err);
+        return res.redirect(`${frontendUrl}?auth_error=session_save_failed`);
+      }
+      try {
+        const redirectUrl = new URL(returnToUrl, frontendUrl).toString();
+        res.redirect(redirectUrl);
+      } catch (e) {
+        res.redirect(frontendUrl + "/");
+      }
+    });
   },
 );
 

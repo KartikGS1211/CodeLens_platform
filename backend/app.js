@@ -8,6 +8,10 @@ import analysisRoutes from "./routes/analysisroutes.js";
 
 const app = express();
 
+// Trust Render/Heroku/etc reverse proxy so req.secure = true behind HTTPS
+// Without this, cookies with `secure: true` are NEVER sent by the browser
+app.set("trust proxy", 1);
+
 const allowedOrigins = [
   "https://code-lens-platform.vercel.app",
   "http://localhost:4321",
